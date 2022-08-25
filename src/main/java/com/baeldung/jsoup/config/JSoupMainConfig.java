@@ -9,5 +9,5 @@ import org.springframework.context.annotation.PropertySource;
 @Configuration
 @Import(CommonConfig.class)
 @ComponentScan("com.baeldung.jsoup")
-@PropertySource("classpath:blog.properties")
+@PropertySource("classpath:common.properties")
 public class JSoupMainConfig { }
