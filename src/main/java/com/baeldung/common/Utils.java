@@ -111,7 +111,7 @@ public class Utils {
 
     public static List<String> fetchFileAsList(String fileName) throws IOException {
         File file = new File(Utils.class.getClassLoader().getResource(GlobalConstants.BLOG_URL_LIST_RESOUCE_FOLDER_PATH + fileName).getPath());
-        return Files.lines(Paths.get(file.getAbsolutePath())).collect(Collectors.toList());
+        return Files.readAllLines(file.toPath());
     }
 
     public static Stream<String> fetchFilesAsList(List<String> fileNames) throws IOException {
@@ -272,10 +272,11 @@ public class Utils {
 
     }
 
-    public static void removeTrailingSlash(String firstURL) {
-        if (null != firstURL && firstURL.charAt(firstURL.length() - 1) == '/') {
-            firstURL = firstURL.substring(0, firstURL.length());
+    public static String removeTrailingSlash(String url) {
+        if (null != url && url.charAt(url.length() - 1) == '/') {
+            return url.substring(0, url.length() - 1);
         }
+        return url;
     }
 
     public static String getAbsolutePathToFileInSrc(String fileName) {
@@ -426,6 +427,12 @@ public class Utils {
         return javaConstructs;
     }
 
+    public static List<JavaConstruct> getJavaConstructsFromLocalJavaFile(Path javaFile) throws IOException {
+        List<JavaConstruct> javaConstructs = new ArrayList<>();
+        getJavaConstructsFromJavaCode(Files.readString(javaFile), javaConstructs);
+        return javaConstructs;
+    }
+
     private static void getJavaConstructsFromJavaCode(String code, List<JavaConstruct> javaConstructs) {
         final ParseResult<CompilationUnit> compilationUnit = new JavaParser().parse(code);
 
@@ -461,9 +468,11 @@ public class Utils {
     private static void getJavaConstructsFromJavaCodeWrappingIntoDummyClass(String code, List<JavaConstruct> javaConstructs) {
         final ParseResult<CompilationUnit> compilationUnit = new JavaParser().parse(GlobalConstants.CONSTRUCT_DUMMY_CLASS_START + code + GlobalConstants.CONSTRUCT_DUMMY_CLASS_END);
 
-        if (!compilationUnit.getProblems()
-            .isEmpty()) {
-            logger.error("Error occured while processing Java code: " + compilationUnit.getProblems().iterator().next().getMessage().substring(0,100) + "\n" + code);
+        if (!compilationUnit.getProblems().isEmpty()) {
+            final String message = compilationUnit.getProblems()
+                .get(0)
+                .getMessage();
+            logger.error("Error occurred while processing Java code: {}\n{}", message.substring(0, Math.min(message.length(), 100)),  code);
         } else {
             compilationUnit.getResult()
                 .ifPresent(result -> result.findAll(ClassOrInterfaceDeclaration.class)
@@ -508,7 +517,7 @@ public class Utils {
         return allJavaConstructs;
     }
 
-    public static void filterAndCollectJacaConstructsNotFoundOnGitHub(List<JavaConstruct> javaConstructsOnPost, List<JavaConstruct> javaConstructsOnGitHub, Multimap<String, JavaConstruct> results, String url) {
+    public static void filterAndCollectJavaConstructsNotFoundOnGitHub(List<JavaConstruct> javaConstructsOnPost, List<JavaConstruct> javaConstructsOnGitHub, Multimap<String, JavaConstruct> results, String url) {
         javaConstructsOnPost.forEach(javaConstructOnPage -> {
             if (javaConstructsOnGitHub.stream().filter(javaConstructOnGitHub -> javaConstructOnPage.equalsTo(javaConstructOnGitHub)).count() > 0) {
                 javaConstructOnPage.setFoundOnGitHub(true);
@@ -827,17 +836,19 @@ public class Utils {
     }
 
     public static String changeLiveUrlWithStaging8(String liveUrl) {
-        String staging8Url = null;
-        if (liveUrl.startsWith("https")) {
-            staging8Url = liveUrl.replace(GlobalConstants.BAELDUNG_HOME_PAGE_URL, GlobalConstants.STAGEING8_HOME_URL);
-        }else if (liveUrl.startsWith("http")) {
-            staging8Url = liveUrl.replace(GlobalConstants.BAELDUNG_HOME_PAGE_URL_WITH_HTTP, GlobalConstants.STAGEING8_HOME_URL);
-        }
-        else {
-            staging8Url = liveUrl.replace(GlobalConstants.BAELDUNG_HOME_PAGE_URL_WIThOUT_THE_PROTOCOL, GlobalConstants.STAGEING8_HOME_URL);
-        }
+        return changeLiveUrlWithBase(liveUrl, GlobalConstants.STAGEING8_HOME_URL);
+    }
 
-        return staging8Url;
+    public static String changeLiveUrlWithBase(String liveUrl, String baseUrl) {
+        String url;
+        if (liveUrl.startsWith("https")) {
+            url = liveUrl.replace(GlobalConstants.BAELDUNG_HOME_PAGE_URL, baseUrl);
+        } else if (liveUrl.startsWith("http")) {
+            url = liveUrl.replace(GlobalConstants.BAELDUNG_HOME_PAGE_URL_WITH_HTTP, baseUrl);
+        } else {
+            url = liveUrl.replace(GlobalConstants.BAELDUNG_HOME_PAGE_URL_WIThOUT_THE_PROTOCOL, baseUrl);
+        }
+        return url;
     }
 
     public static void sleep(int millis) {

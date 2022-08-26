@@ -17,8 +17,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
@@ -272,6 +274,47 @@ public class TestUtils {
             }
         });
         return errors;
+    }
+
+    public static Map<String, Path> findModulesInLocalRepo(GitHubRepoVO repository, Predicate<String> urlFilter) {
+        final Matcher matcher = ARTICLE_TITLE_AND_LINK_ON_GITHUB_MODULE_PATTERN.matcher("");
+        final Map<String, Path> urlToModulePath = new HashMap<>();
+
+        try (var tree = Files.walk(Path.of(repository.repoLocalPath()))) {
+            tree.map(path -> path.resolve("README.md"))
+                .filter(readme -> Files.exists(readme) && Files.isDirectory(readme.getParent()))
+                .forEach(readme -> {
+                    final Path module = readme.getParent();
+                    // extract article urls from readme file
+                    try (var lines = Files.lines(readme)) {
+                        lines.forEach(line -> {
+                            if (matcher.reset(line).find()) {
+                                final String postUrl = matcher.group(2);
+                                if ((postUrl.startsWith(GlobalConstants.BAELDUNG_HOME_PAGE_URL) || postUrl.startsWith(GlobalConstants.BAELDUNG_HOME_PAGE_URL_WITH_HTTP))
+                                    && urlFilter.test(postUrl)
+                                ) {
+                                    urlToModulePath.putIfAbsent(postUrl, module.toAbsolutePath());
+                                }
+                            }
+                        });
+                    } catch (IOException e) {
+                        logger.error(e.getMessage(), e);
+                    }
+                });
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return urlToModulePath;
+    }
+
+    public static List<Path> findFilesInLocalModule(Path module, Predicate<String> filterByFileName) {
+        try (var tree = Files.walk(module)) {
+            return tree
+                .filter(path -> filterByFileName.test(path.getFileName().toString()))
+                .collect(Collectors.toList());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static Stream<Arguments> redirectsTestDataProvider() {
