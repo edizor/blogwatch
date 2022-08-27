@@ -43,7 +43,7 @@ public class JavaConstructsTest extends BaseJsoupTest {
 
         Map<GitHubRepoVO, Map<String, Path>> repoToUrls = new HashMap<>();
         GlobalConstants.tutorialsRepos.forEach(repo -> {
-            Map<String, Path> urlToModule = TestUtils.findModulesInLocalRepo(repo,
+            Map<String, Path> urlToModule = TestUtils.createMapPostToGithubModuleLocal(repo,
                 url -> posts.stream().anyMatch(Utils.removeTrailingSlash(url)::endsWith)
             );
             if (!urlToModule.isEmpty()) {

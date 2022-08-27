@@ -276,7 +276,14 @@ public class TestUtils {
         return errors;
     }
 
-    public static Map<String, Path> findModulesInLocalRepo(GitHubRepoVO repository, Predicate<String> urlFilter) {
+    /**
+     * Finds all posts and creates a post to Github module map via traversing README files in the local repository.
+     *
+     * @param repository a GitHubRepoVO
+     * @param urlFilter a predicate to filter by post url.
+     * @return a map of post to Github Module (local directory path)
+     */
+    public static Map<String, Path> createMapPostToGithubModuleLocal(GitHubRepoVO repository, Predicate<String> urlFilter) {
         final Matcher matcher = ARTICLE_TITLE_AND_LINK_ON_GITHUB_MODULE_PATTERN.matcher("");
         final Map<String, Path> urlToModulePath = new HashMap<>();
 
