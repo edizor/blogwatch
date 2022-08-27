@@ -2,12 +2,14 @@ package com.baeldung.jsoup;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.jsoup.nodes.Document;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +30,21 @@ public class JavaConstructsTest extends BaseJsoupTest {
 
     @Value("${givenAllTheArticles_whenAnArticleLoads_thenJavaClassesAndMethodsCanBeFoundOnGitHub.file-for-javaConstructs-test}")
     private String fileForJavaConstructsTest;
+
+    @Value("${redownload-repo}")
+    protected String redownloadRepo;
+
+    @BeforeEach
+    public void loadGitHubRepositories() {
+        logger.info("Loading Github repositories into local");
+        for (GitHubRepoVO gitHubRepo : GlobalConstants.tutorialsRepos) {
+            try {
+                Utils.fetchGitRepo(redownloadRepo, Paths.get(gitHubRepo.repoLocalPath()), gitHubRepo.repoUrl());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
 
     @Tag("matchJavaConstructs")
     @Test
