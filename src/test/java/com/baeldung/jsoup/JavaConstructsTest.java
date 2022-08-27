@@ -59,6 +59,7 @@ public class JavaConstructsTest extends BaseJsoupTest {
             // collect all java constructs from all modules in the repo
             Map<Path, List<JavaConstruct>> moduleToJavaConstructs = new HashMap<>();
 
+            // for each module in the repo, we find all Java code and extract Java Constructs
             urlToModule.values().stream().distinct().forEach(module -> {
                 logger.info("Getting Java Constructs from Github Module: {}", module);
 
@@ -76,6 +77,7 @@ public class JavaConstructsTest extends BaseJsoupTest {
                 moduleToJavaConstructs.put(module, javaConstructsInModule);
             });
 
+            // we get the Java code in each post via HTTP, compare with what we found in our local repository.
             urlToModule.forEach((post, module) -> {
                 final String postUrl = Utils.changeLiveUrlWithBase(post, baseURL);
                 try {
