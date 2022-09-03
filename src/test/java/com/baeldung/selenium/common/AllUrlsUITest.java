@@ -471,6 +471,23 @@ public class AllUrlsUITest extends AllUrlsUIBaseTest {
     }
 
     @ConcurrentTest
+    @PageTypes({ SitePage.Type.PAGE, SitePage.Type.ARTICLE })
+    @LogOnce(GlobalConstants.givenAllArticlesAndPages_whenAPageLoads_thenItDoesNotContainNoindexTag)
+    public final void givenAllArticlesAndPages_whenAPageLoads_thenItDoesNotContainNoindexTag(SitePage page) {
+        recordExecution(GlobalConstants.givenAllArticlesAndPages_whenAPageLoads_thenItDoesNotContainNoindexTag);
+
+        if (shouldSkipUrl(page, GlobalConstants.givenAllArticlesAndPages_whenAPageLoads_thenItDoesNotContainNoindexTag)) {
+            return;
+        }
+
+        if (page.hasNoindexMetaTag()) {
+            recordMetrics(1, TestMetricTypes.FAILED);
+            recordFailure(GlobalConstants.givenAllArticlesAndPages_whenAPageLoads_thenItDoesNotContainNoindexTag);
+            badURLs.put(GlobalConstants.givenAllArticlesAndPages_whenAPageLoads_thenItDoesNotContainNoindexTag, page.getUrlWithNewLineFeed());
+        }
+    }
+
+    @ConcurrentTest
     @Tag(GlobalConstants.TAG_EDITORIAL)
     @PageTypes({ SitePage.Type.PAGE, SitePage.Type.ARTICLE })
     @LogOnce(GlobalConstants.givenAllEditorialTests_whenHittingAllArticles_thenOK)
@@ -501,6 +518,7 @@ public class AllUrlsUITest extends AllUrlsUIBaseTest {
             givenAllArticlesAndPages_whenAPageLoads_thenMetaOGImageAndTwitterImagePointToTheAbsolutePath(page);
             givenAllArticlesAndPages_whenAPageLoads_thenItDoesNotContainOverlappingText(page);
             givenAllArticlesAndPages_whenAPageLoads_thenItHasAFeaturedImage(page);
+            givenAllArticlesAndPages_whenAPageLoads_thenItDoesNotContainNoindexTag(page);
             // below tests are only for articles
             if (AllUrlsConcurrentExtension.ensureTag(page, SitePage.Type.ARTICLE)) {
                 givenAllArticles_whenAnArticleLoads_thenArticleHasNoEmptyCodeBlock(page);
@@ -510,7 +528,7 @@ public class AllUrlsUITest extends AllUrlsUIBaseTest {
                 givenAllArticles_whenAnArticleLoads_thenItHasSingleShortcodeAtTheEnd(page);
                 givenAllArticles_whenAnalyzingCodeBlocks_thenCodeBlocksAreRenderedProperly(page);
                 givenAllArticles_whenAnalyzingImages_thenImagesDoNotHaveEmptyAltAttribute(page);
-                givenAllArticles_whenAnalyzingExcerpt_thenItShouldNotBeEmptyAndShouldMatchDescription(page);
+                givenAllArticles_whenAnalyzingExcerpt_thenItShouldNotBeEmptyAndShouldMatchDescription(page);                
             }
         } catch (Exception e) {
             logger.error("Error occurred while processing: {}, error message: {}",
