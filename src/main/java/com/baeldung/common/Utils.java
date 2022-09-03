@@ -30,6 +30,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
@@ -484,28 +486,27 @@ public class Utils {
         }
     }
 
-    public static String getGitHubModuleUrl(Document jSoupDocument, String url) throws IOException {
-        String gitHubUrl = null;
+    public static String getGitHubModuleUrl(String postUrl) throws IOException {
+        Document jSoupDocument = Utils.getJSoupDocument(postUrl);
         Elements links = jSoupDocument.select("section a[href*='" + GlobalConstants.GITHUB_REPO_EUGENP + "'],section a[href*='" + GlobalConstants.GITHUB_REPO_BAELDUNG + "']");
 
         if (CollectionUtils.isEmpty(links)) {
-            return gitHubUrl;
+            return null;
         }
 
+        String gitHubUrl;
         if (links.size() > 1) {
-            logger.debug("More than one GitHub links Found on :" + url);
+            logger.debug("More than one GitHub links Found on :" + postUrl);
             logger.debug("Will pickup ther last from the following URLs");
             List<String> gitHubUrls = new ArrayList<>();
             links.forEach(element -> gitHubUrls.add(element.absUrl("href")));
             logger.debug(gitHubUrls.toString());
         }
+        // TODO JAVA-13330: we need to return all found github urls here
         gitHubUrl = links.get(links.size() - 1).absUrl("href");
 
         Response response = Jsoup.connect(gitHubUrl).followRedirects(true).execute();
-        if (null != response) {
-            return response.url().toString();
-        }
-        return gitHubUrl;
+        return response.url().toString();
     }
 
     public static List<JavaConstruct> getDiscoveredJavaArtifacts(List<Object> discoveredURLs) {
@@ -564,19 +565,17 @@ public class Utils {
 
     public static Multimap<String, String> createMapForGitHubModuleAndPosts(String baseURL, String fileForJavaConstructsTest, RateLimiter rateLimiter) throws IOException {
         Multimap<String, String> gitHubModuleAndPostsMap = ArrayListMultimap.create();
-        String url = null;
+        String postUrl = null;
         for (String entry : Utils.fetchFileAsList(fileForJavaConstructsTest)) {
             try {
                 rateLimiter.acquire();
-                url = baseURL + entry;
-                logger.info("Processing:  " + url);
-                if (Utils.excludePage(url, GlobalConstants.ARTILCE_JAVA_WEEKLY, false)) {
+                postUrl = baseURL + entry;
+                logger.info("Processing:  " + postUrl);
+                if (Utils.excludePage(postUrl, GlobalConstants.ARTILCE_JAVA_WEEKLY, false)) {
                     continue;
                 }
 
-                Document jSoupDocument = Utils.getJSoupDocument(url);
-
-                String gitHubUrl = Utils.getGitHubModuleUrl(jSoupDocument, url);
+                String gitHubUrl = Utils.getGitHubModuleUrl(postUrl);
                 if (StringUtils.isBlank(gitHubUrl)) {
                     continue;
                 }
@@ -584,10 +583,10 @@ public class Utils {
                     gitHubUrl = gitHubUrl.substring(0, gitHubUrl.length() - 1);
                 }
 
-                gitHubModuleAndPostsMap.put(gitHubUrl, url);
+                gitHubModuleAndPostsMap.put(gitHubUrl, postUrl);
 
             } catch (Exception e) {
-                logger.error("Error occurened in createMapForGitHubModuleAndPosts while process:" + url + " .Error message:" + e.getMessage());
+                logger.error("Error occurened in createMapForGitHubModuleAndPosts while process:{} .Error message: {}", postUrl, e.getMessage());
             }
 
         }
@@ -975,6 +974,16 @@ public class Utils {
         return links;
     }
 
+    public static Path getLocalPathByGithubUrl(String githubModuleUrl) {
+        if (githubModuleUrl == null) {
+            return null;
+        }
+        final Optional<Path> modulePath = tutorialsRepos.stream()
+            .map(r -> r.getLocalPathByUrl(githubModuleUrl))
+            .filter(Objects::nonNull)
+            .findFirst();
+        return modulePath.orElse(null);
+    }
 
     public static Function<String, String> replaceTutorialLocalPathWithHttpUrl(String repoLocalPath, String repoHttpPath){
         return path -> repoHttpPath.concat(StringUtils.removeStart(path, repoLocalPath));

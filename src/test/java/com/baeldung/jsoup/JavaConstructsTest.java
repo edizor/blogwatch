@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.jsoup.nodes.Document;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +23,8 @@ import com.baeldung.common.vo.JavaConstruct;
 import com.baeldung.utility.TestUtils;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
+import com.google.common.util.concurrent.RateLimiter;
 
 public class JavaConstructsTest extends BaseJsoupTest {
 
@@ -33,6 +36,8 @@ public class JavaConstructsTest extends BaseJsoupTest {
 
     @Value("${redownload-repo}")
     protected String redownloadRepo;
+
+    protected RateLimiter rateLimiter = RateLimiter.create(1);
 
     @BeforeEach
     public void loadGitHubRepositories() {
@@ -55,61 +60,63 @@ public class JavaConstructsTest extends BaseJsoupTest {
         Multimap<String, JavaConstruct> results = ArrayListMultimap.create();
 
         logger.info("Using article file: {}", fileForJavaConstructsTest);
-        logger.info("Start - creating Map for GitHub modules and Posts");
+        logger.info("Start - creating Map for Posts to Github Modules");
+
+        Multimap<String, Path> postUrlsToGithubModuleLocalPaths = ArrayListMultimap.create();
         List<String> posts = Utils.fetchFileAsList(fileForJavaConstructsTest);
-
-        Map<GitHubRepoVO, Map<String, Path>> repoToUrls = new HashMap<>();
-        GlobalConstants.tutorialsRepos.forEach(repo -> {
-            Map<String, Path> urlToModule = TestUtils.createMapPostToGithubModuleLocal(repo,
-                url -> posts.stream().anyMatch(Utils.removeTrailingSlash(url)::endsWith)
-            );
-            if (!urlToModule.isEmpty()) {
-                logger.info("Repository found: {}, has ({}), posts: {}", repo.repoName(), urlToModule.size(), urlToModule.keySet());
-                repoToUrls.put(repo, urlToModule);
+        for (String url : posts) {
+            String postUrl = baseURL + url;
+            logger.info("Processing:  " + postUrl);
+            rateLimiter.acquire();
+            String gitHubUrl = Utils.getGitHubModuleUrl(postUrl);
+            if (gitHubUrl == null) {
+                // no GitHub url found, no-op
+                continue;
             }
-        });
-        logger.info("Found repositories: {}", repoToUrls.size());
-        logger.info("Finished - creating Map for GitHub modules and Posts");
+            final Path modulePath = Utils.getLocalPathByGithubUrl(gitHubUrl);
+            if (modulePath == null) {
+                logger.warn("cannot find local path for Github URL: {}", gitHubUrl);
+                continue;
+            }
+            postUrlsToGithubModuleLocalPaths.put(postUrl, modulePath);
+        }
+        logger.info("Finished - creating Map for Posts to Github Modules");
 
-        repoToUrls.forEach((repo, urlToModule) -> {
-
-            // collect all java constructs from all modules in the repo
-            Map<Path, List<JavaConstruct>> moduleToJavaConstructs = new HashMap<>();
-
-            // for each module in the repo, we find all Java code and extract Java Constructs
-            urlToModule.values().stream().distinct().forEach(module -> {
-                logger.info("Getting Java Constructs from Github Module: {}", module);
-
-                // find all java files in the module
-                final List<JavaConstruct> javaConstructsInModule = new ArrayList<>();
-                final List<Path> javaFiles = TestUtils.findFilesInLocalModule(module, fileName -> fileName.endsWith(".java"));
-                javaFiles.forEach(javaFile -> {
-                    try {
-                        javaConstructsInModule.addAll(Utils.getJavaConstructsFromLocalJavaFile(javaFile));
-                    } catch (IOException e) {
-                        logger.error("Error occurred while processing java file: {}", javaFile, e);
-                    }
-                });
-
-                moduleToJavaConstructs.put(module, javaConstructsInModule);
-            });
-
-            // we get the Java code in each post via HTTP, compare with what we found in our local repository.
-            urlToModule.forEach((post, module) -> {
-                final String postUrl = Utils.changeLiveUrlWithBase(post, baseURL);
+        // collect all java constructs for all modules
+        Map<Path, List<JavaConstruct>> moduleToJavaConstructs = new HashMap<>();
+        postUrlsToGithubModuleLocalPaths.forEach((postUrl, module) -> {
+            logger.info("Getting Java Constructs from Github Module: {}", module);
+            // find all java files in the module
+            final List<JavaConstruct> javaConstructsInModule = new ArrayList<>();
+            final List<Path> javaFiles = TestUtils.findFilesInLocalModule(module, fileName -> fileName.endsWith(".java"));
+            javaFiles.forEach(javaFile -> {
                 try {
-                    logger.info("Getting Java Constructs from post: {}", postUrl);
-                    // get HTML of the post
-                    Document jSoupDocument = Utils.getJSoupDocument(postUrl);
-                    // get Java constructs from a post
-                    List<JavaConstruct> javaConstructsOnPost = Utils.getJavaConstructsFromPreTagsInTheJSoupDocument(jSoupDocument);
-                    List<JavaConstruct> javaConstructsOnModule = moduleToJavaConstructs.get(module);
-                    // find Java constructs not found in GitHub module
-                    Utils.filterAndCollectJavaConstructsNotFoundOnGitHub(javaConstructsOnPost, javaConstructsOnModule, results, postUrl);
-                } catch (Exception e) {
-                    logger.error("Error occurred while processing post: {}", postUrl, e);
+                    javaConstructsInModule.addAll(Utils.getJavaConstructsFromLocalJavaFile(javaFile));
+                } catch (IOException e) {
+                    logger.error("Error occurred while processing java file: {}", javaFile, e);
                 }
             });
+            moduleToJavaConstructs.put(module, javaConstructsInModule);
+        });
+
+        // we get the Java code in each post via HTTP, compare with what we found in our local repository before.
+        Multimaps.asMap(postUrlsToGithubModuleLocalPaths).forEach((postUrl, modules) -> {
+            try {
+                logger.info("Getting Java Constructs from post: {}", postUrl);
+                // get HTML of the post
+                Document jSoupDocument = Utils.getJSoupDocument(postUrl);
+                // get Java constructs from a post
+                List<JavaConstruct> javaConstructsOnPost = Utils.getJavaConstructsFromPreTagsInTheJSoupDocument(jSoupDocument);
+                // collect Java constructs from the modules of post
+                final List<JavaConstruct> javaConstructsOnModules = modules.stream()
+                    .flatMap(path -> moduleToJavaConstructs.get(path)
+                        .stream())
+                    .collect(Collectors.toList());
+                // find Java constructs not found in GitHub module
+                Utils.filterAndCollectJavaConstructsNotFoundOnGitHub(javaConstructsOnPost, javaConstructsOnModules, results, postUrl);
+            } catch (Exception e) {
+                logger.error("Error occurred while processing post: {}", postUrl, e);
+            }
         });
 
         final int failingArticles = Utils.countArticlesWithProblems(results);
