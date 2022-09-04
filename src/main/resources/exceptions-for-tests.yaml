@@ -59,6 +59,10 @@ givenArticlesWithALinkToTheGitHubModule_whenTheArticleLoads_thenTheGitHubModuleL
   - /core-java-modules/multimodulemavenproject
   - /linux/wc-command
   - /kotlin/
+  - /git-recover-dropped-stash
+  - /git-discard-unstaged-changes
+  - /ops/docker-compose-restart-container
+  - /java-lightrun
 givenArticlesWithALinkToTheGitHubModule_whenTheArticleLoads_thenTheArticleTitleAndGitHubLinkMatch:
 
 givenAllTheArticles_whenAnArticleLoads_thenTheAuthorIsNotFromTheExcludedList:
