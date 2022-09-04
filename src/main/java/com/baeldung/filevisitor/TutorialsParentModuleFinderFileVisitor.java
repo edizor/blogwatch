@@ -15,9 +15,13 @@ import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.baeldung.common.GlobalConstants;
+import com.baeldung.common.GithubRepositories;
 
 public class TutorialsParentModuleFinderFileVisitor extends SimpleFileVisitor<Path> {
+
+    private static final String TUTORIALS_REPOSITORY_LOCAL_PATH = GithubRepositories
+        .getRepositoryByName("tutorials").repoLocalPath();
+
     protected Logger logger = LoggerFactory.getLogger(getClass());
 
     private final String artificateId;
@@ -30,7 +34,7 @@ public class TutorialsParentModuleFinderFileVisitor extends SimpleFileVisitor<Pa
 
     @Override
     public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-        if (dir.toString().equalsIgnoreCase(GlobalConstants.tutorialsRepoLocalPath + "/.git/") || dir.toString().equalsIgnoreCase(GlobalConstants.tutorialsRepoLocalPath + "/.git")) {
+        if (dir.toString().equalsIgnoreCase(TUTORIALS_REPOSITORY_LOCAL_PATH + "/.git/") || dir.toString().equalsIgnoreCase(TUTORIALS_REPOSITORY_LOCAL_PATH + "/.git")) {
             return FileVisitResult.SKIP_SUBTREE;
         }
         return super.preVisitDirectory(dir, attrs);

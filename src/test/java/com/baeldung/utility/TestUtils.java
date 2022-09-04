@@ -220,7 +220,7 @@ public class TestUtils {
      * This method clears the article title in terms of two points:
      * <ul>
      *     <li>Remove leading and trailing whitespaces (trim)</li>
-     *     <li>Clears blackslashes for markdown/html escape, like: Flux&lt;\T&gt; => Flux&lt;T&gt;</li>
+     *     <li>Clears backslashes for markdown/html escape, like: Flux&lt;\T&gt; => Flux&lt;T&gt;</li>
      * </ul>
      * Better to implement handling of future special cases here.
      *

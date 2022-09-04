@@ -10,9 +10,6 @@ import static com.baeldung.common.ConsoleColors.redBoldUnderlined;
 import static com.baeldung.common.GlobalConstants.CODE_TAG;
 import static com.baeldung.common.GlobalConstants.LANGUAGE_JAVA_CLASS_NAME;
 import static com.baeldung.common.GlobalConstants.POM_FILE_NAME_LOWERCASE;
-import static com.baeldung.common.GlobalConstants.tutorialsRepoLocalPath;
-import static com.baeldung.common.GlobalConstants.tutorialsRepoMasterPath;
-import static com.baeldung.common.GlobalConstants.tutorialsRepos;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -820,8 +817,9 @@ public class Utils {
 
         logger.info(colordHeading("Please find below child modules for: {}"), tutorialsParentModuleFinderFileVisitor.getArtificateId());
 
+        GitHubRepoVO tutorialsRepo = GithubRepositories.getRepositoryByName("tutorials");
         tutorialsParentModuleFinderFileVisitor.getChildModules().forEach(modulePath -> {
-            String gitUrl = StringUtils.removeEnd(StringUtils.removeStart(modulePath, GlobalConstants.tutorialsRepoLocalPath), "pom.xml");
+            String gitUrl = StringUtils.removeEnd(StringUtils.removeStart(modulePath, tutorialsRepo.repoLocalPath()), "pom.xml");
             System.out.println("https://github.com/eugenp/tutorials/tree/master" + gitUrl);
         });
     }
@@ -846,6 +844,10 @@ public class Utils {
         } catch (InterruptedException e) {
             //
         }
+    }
+
+    public static void fetchGitRepo(String redownload, GitHubRepoVO repository) throws IOException, GitAPIException {
+        fetchGitRepo(redownload, Paths.get(repository.repoLocalPath()), repository.repoUrl());
     }
 
     public static void fetchGitRepo(String redownloadTutorialsRepo, Path repoDirectoryPath, String repoGitUrl) throws IOException, InvalidRemoteException, TransportException, GitAPIException {
@@ -885,8 +887,9 @@ public class Utils {
 
         logger.info(colordHeading("Please find below unalighed Moudles"));
 
+        GitHubRepoVO tutorialsRepo = GithubRepositories.getRepositoryByName("tutorials");
         moduleAlignmentValidatorFileVisitor.getInvalidModules().forEach(modulePath -> {
-            String gitUrl = StringUtils.removeEnd(StringUtils.removeStart(modulePath, GlobalConstants.tutorialsRepoLocalPath), "pom.xml");
+            String gitUrl = StringUtils.removeEnd(StringUtils.removeStart(modulePath, tutorialsRepo.repoLocalPath()), "pom.xml");
             System.out.println("https://github.com/eugenp/tutorials/tree/master" + gitUrl);
         });
     }
@@ -896,8 +899,9 @@ public class Utils {
             logger.info(colordHeading("The auotmation coundn't parse folloiwng modues. Please report these to devOps-dev"));
         }
 
+        GitHubRepoVO tutorialsRepo = GithubRepositories.getRepositoryByName("tutorials");
         moduleAlignmentValidatorFileVisitor.getUnparsableModule().forEach(modulePath -> {
-            String gitUrl = StringUtils.removeEnd(StringUtils.removeStart(modulePath, GlobalConstants.tutorialsRepoLocalPath), "pom.xml");
+            String gitUrl = StringUtils.removeEnd(StringUtils.removeStart(modulePath, tutorialsRepo.repoLocalPath()), "pom.xml");
             System.out.println("https://github.com/eugenp/tutorials/tree/master" + gitUrl);
         });
     }
@@ -927,7 +931,7 @@ public class Utils {
         List<String> readmeList = null;
         Map<GitHubRepoVO, List<String>> readmes = new HashMap<GitHubRepoVO, List<String>>();
 
-        for(GitHubRepoVO repo: tutorialsRepos) {
+        for(GitHubRepoVO repo: GithubRepositories.getRepositories()) {
             readmeList = new ArrayList<>();
             Path repoLocalPath = Paths.get(repo.repoLocalPath());
             Utils.fetchGitRepo(GlobalConstants.NO, repoLocalPath, repo.repoUrl());
@@ -935,7 +939,11 @@ public class Utils {
             ReadmeFileVisitor readmeFileVisitor = new ReadmeFileVisitor(repo.repoLocalPath());
             Files.walkFileTree(repoLocalPath, readmeFileVisitor);
             if(convertPathToHttpUrl) {
-                readmeList.addAll(readmeFileVisitor.getReadmeList().stream().map(replaceTutorialLocalPathWithHttpUrl(repo.repoLocalPath(), repo.repoMasterHttpPath())).collect(toList()));
+                readmeList.addAll(readmeFileVisitor.getReadmeList()
+                    .stream()
+                    .map(repo::getHttpUrlByLocalPath)
+                    .toList()
+                );
             }else {
                 readmeList.addAll(readmeFileVisitor.getReadmeList());
             }
@@ -964,14 +972,6 @@ public class Utils {
         return links;
     }
 
-
-    public static Function<String, String> replaceTutorialLocalPathWithHttpUrl(String repoLocalPath, String repoHttpPath){
-        return path -> repoHttpPath.concat(StringUtils.removeStart(path, repoLocalPath));
-    }
-
-    public static Function<String, String> replaceJavaTutorialLocalPathWithHttpUrl = path -> tutorialsRepoMasterPath.concat(StringUtils.removeStart(path, tutorialsRepoLocalPath));
-
-
     public static List<String> getLinksToTheBaeldungSite(Document doc) {
         Elements baeldungUrls = doc.select("a[href*="+GlobalConstants.BAELDUNG_DOMAIN_NAME+"]");
         return baeldungUrls.stream().map(e -> e.attr("href")).collect(toList());
@@ -990,22 +990,23 @@ public class Utils {
     }
 
     public static String getErrorMessageForNotBuiltModules(
-            List<MavenProjectVO> modulesMissingInDefault,
-            List<MavenProjectVO> modulesMissingInIntegration) {
+        GitHubRepoVO repository,
+        List<MavenProjectVO> modulesMissingInDefault,
+        List<MavenProjectVO> modulesMissingInIntegration) {
 
         StringBuilder sb = new StringBuilder("Module Missing in default* profiles ");
         sb.append("\n----------------------------------- \n");
-        modulesMissingInDefault.forEach(module -> sb.append(removeRepoLocalPath(module.getPomFileLocation())).append("\n"));
+        modulesMissingInDefault.forEach(module -> sb.append(removeRepoLocalPath(repository, module.getPomFileLocation())).append("\n"));
 
         sb.append("\nModule Missing in integration* profiles");
         sb.append("\n----------------------------------- \n");
-        modulesMissingInIntegration.forEach(module -> sb.append(removeRepoLocalPath(module.getPomFileLocation())).append("\n"));
+        modulesMissingInIntegration.forEach(module -> sb.append(removeRepoLocalPath(repository, module.getPomFileLocation())).append("\n"));
 
         return sb.toString();
     }
 
-    public static String removeRepoLocalPath(String directoryName) {
-        return directoryName.replace(tutorialsRepoLocalPath, "").replace("/" + POM_FILE_NAME_LOWERCASE, "");
+    public static String removeRepoLocalPath(GitHubRepoVO repository, String directoryName) {
+        return directoryName.replace(repository.repoLocalPath(), "").replace("/" + POM_FILE_NAME_LOWERCASE, "");
     }
 
     public static String summarizeExecution(int metrics, Map<String, Integer> executedTests, Map<String, Integer> failedTests) {

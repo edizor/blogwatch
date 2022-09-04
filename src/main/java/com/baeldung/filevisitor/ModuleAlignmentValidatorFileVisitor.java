@@ -19,10 +19,14 @@ import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.baeldung.common.GithubRepositories;
 import com.baeldung.common.GlobalConstants;
 import com.baeldung.common.YAMLProperties;
 
 public class ModuleAlignmentValidatorFileVisitor extends SimpleFileVisitor<Path> {
+
+    private static final String TUTORIALS_REPOSITORY_LOCAL_PATH = GithubRepositories
+        .getRepositoryByName("tutorials").repoLocalPath();
 
     protected Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -33,7 +37,7 @@ public class ModuleAlignmentValidatorFileVisitor extends SimpleFileVisitor<Path>
 
     @Override
     public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-        if (dir.toString().equalsIgnoreCase(GlobalConstants.tutorialsRepoLocalPath + "/.git/") || dir.toString().equalsIgnoreCase(GlobalConstants.tutorialsRepoLocalPath + "/.git")) {
+        if (dir.toString().equalsIgnoreCase(TUTORIALS_REPOSITORY_LOCAL_PATH + "/.git/") || dir.toString().equalsIgnoreCase(TUTORIALS_REPOSITORY_LOCAL_PATH + "/.git")) {
             return FileVisitResult.SKIP_SUBTREE;
         }
         return super.preVisitDirectory(dir, attrs);
@@ -42,7 +46,7 @@ public class ModuleAlignmentValidatorFileVisitor extends SimpleFileVisitor<Path>
     @Override
     public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws FileNotFoundException, IOException {
 
-        if (GlobalConstants.tutorialsRepoLocalPath.concat("/pom.xml").equals(path.toString())) {
+        if (TUTORIALS_REPOSITORY_LOCAL_PATH.concat("/pom.xml").equals(path.toString())) {
             return FileVisitResult.CONTINUE;
         }
 
@@ -66,7 +70,7 @@ public class ModuleAlignmentValidatorFileVisitor extends SimpleFileVisitor<Path>
                 }
 
             } catch (XmlPullParserException e) {
-                logger.error("Error while parsing POM" + path.toString());
+                logger.error("Error while parsing POM {}", path);
                 unparsableModule.add(path.toString());
             }
         }
@@ -74,11 +78,11 @@ public class ModuleAlignmentValidatorFileVisitor extends SimpleFileVisitor<Path>
     }
 
     private Object removeRepoLocalPath(String directoryName) {
-        return directoryName.replace(GlobalConstants.tutorialsRepoLocalPath, "");
+        return directoryName.replace(TUTORIALS_REPOSITORY_LOCAL_PATH, "");
     }
 
     private Reader getFileReader(String path) throws FileNotFoundException {
-        return new FileReader(path.toString());
+        return new FileReader(path);
     }
 
     public List<String> getInvalidModules() {

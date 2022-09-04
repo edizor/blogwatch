@@ -4,6 +4,8 @@ import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
+
 public record GitHubRepoVO(String repoName, String repoUrl, String repoLocalPath, String repoMasterHttpPath) {
 
     private static final Pattern REPO_URL_PATTERN = Pattern.compile(
@@ -24,7 +26,7 @@ public record GitHubRepoVO(String repoName, String repoUrl, String repoLocalPath
     }
 
     /**
-     * Takes Github url and finds corresponding local directory
+     * Takes GitHub url and finds corresponding local directory
      *
      * @param url Github HTTP url
      * @return Path of directory or null
@@ -44,6 +46,16 @@ public record GitHubRepoVO(String repoName, String repoUrl, String repoLocalPath
             return path.isEmpty() ? baseDir : baseDir.resolve(path);
         }
         return null;
+    }
+
+    /**
+     * Takes local repo path and converts it to GitHub url
+     *
+     * @param path Full path of local repo
+     * @return corresponding GitHub url
+     */
+    public String getHttpUrlByLocalPath(String path) {
+        return repoMasterHttpPath.concat(StringUtils.removeStart(path, repoLocalPath));
     }
 
     /**

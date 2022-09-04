@@ -4,6 +4,7 @@ import com.baeldung.common.*;
 import static com.baeldung.common.ConsoleColors.*;
 import com.baeldung.common.config.CommonConfig;
 import com.baeldung.common.config.MyApplicationContextInitializer;
+import com.baeldung.common.vo.GitHubRepoVO;
 import com.baeldung.common.vo.MavenProjectVO;
 import com.baeldung.filevisitor.MavenModulesDetailsFileVisitor;
 import com.baeldung.utility.TestUtils;
@@ -44,10 +45,11 @@ public class TutorialsTest extends BaseTest {
 
         List<String> testExceptions = getTestExceptions(testInfo);
 
-        Path repoLocalPath = Paths.get(tutorialsRepoLocalPath);
-        Utils.fetchGitRepo(GlobalConstants.YES, repoLocalPath, tutorialsRepoGitUrl);
+        GitHubRepoVO tutorialsRepo = GithubRepositories.getRepositoryByName("tutorials");
+        Utils.fetchGitRepo(GlobalConstants.YES, tutorialsRepo);
 
-        MavenModulesDetailsFileVisitor modulesFileVisitor = new MavenModulesDetailsFileVisitor(GlobalConstants.tutorialsRepoLocalPath);
+        MavenModulesDetailsFileVisitor modulesFileVisitor = new MavenModulesDetailsFileVisitor(tutorialsRepo.repoLocalPath());
+        Path repoLocalPath = Paths.get(tutorialsRepo.repoLocalPath());
         Files.walkFileTree(repoLocalPath, modulesFileVisitor);
 
         Map<String, MavenProjectVO> modules = modulesFileVisitor.getModules();
@@ -55,26 +57,26 @@ public class TutorialsTest extends BaseTest {
 
         HashMap<String, List<String>> defaultProfiles = new HashMap<>();
         HashMap<String, List<String>> integrationProfiles = new HashMap<>();
-        extractModulesForProfile(defaultProfiles, integrationProfiles, tutorialsRepoLocalPath);
+        extractModulesForProfile(defaultProfiles, integrationProfiles, tutorialsRepo.repoLocalPath());
 
         markBuiltModules(modules, defaultProfiles, true);
         markBuiltModules(modules, integrationProfiles, false);
 
         List<MavenProjectVO> modulesMissingInDefault = modules.values().stream()
                 .filter(module -> !module.isBuildInDefaultProfile()
-                        && !testExceptions.contains(removeRepoLocalPath(module.getPomFileLocation())))
+                        && !testExceptions.contains(removeRepoLocalPath(tutorialsRepo, module.getPomFileLocation())))
                 .sorted(Comparator.comparing(MavenProjectVO::getPomFileLocation))
                 .collect(Collectors.toList());
 
         List<MavenProjectVO> modulesMissingInIntegraiton = modules.values().stream()
                 .filter(module -> !module.isBuildInIntegrationProfile()
-                        && !testExceptions.contains(removeRepoLocalPath(module.getPomFileLocation())))
+                        && !testExceptions.contains(removeRepoLocalPath(tutorialsRepo, module.getPomFileLocation())))
                 .sorted(Comparator.comparing(MavenProjectVO::getPomFileLocation))
                 .collect(Collectors.toList());
 
 
         if (!modulesMissingInDefault.isEmpty() || !modulesMissingInIntegraiton.isEmpty()) {
-            String results = getErrorMessageForNotBuiltModules(modulesMissingInDefault, modulesMissingInIntegraiton);
+            String results = getErrorMessageForNotBuiltModules(tutorialsRepo, modulesMissingInDefault, modulesMissingInIntegraiton);
             int totalFailures = modulesMissingInDefault.size() + modulesMissingInIntegraiton.size();
 
             BaseTest.recordMetrics(totalFailures, FAILED);

@@ -1,0 +1,51 @@
+repositories:
+  -
+    repoName: tutorials
+    repoUrl: https://github.com/eugenp/tutorials.git
+    repoLocalPath: /tutorials-source-code
+    repoMasterHttpPath: https://github.com/eugenp/tutorials/tree/master
+  -
+    repoName: scala-tutorials
+    repoUrl: https://github.com/Baeldung/scala-tutorials.git
+    repoLocalPath: /scala-tutorials-source-code
+    repoMasterHttpPath: https://github.com/Baeldung/scala-tutorials/tree/master
+  -
+    repoName: kotlin-tutorials
+    repoUrl: https://github.com/Baeldung/kotlin-tutorials.git
+    repoLocalPath: /kotlin-tutorials-source-code
+    repoMasterHttpPath: https://github.com/Baeldung/kotlin-tutorials/tree/master
+  -
+    repoName: spring-security-oauth
+    repoUrl: https://github.com/Baeldung/spring-security-oauth.git
+    repoLocalPath: /spring-security-oauth-source-code
+    repoMasterHttpPath: https://github.com/Baeldung/spring-security-oauth/tree/master
+  -
+    repoName: spring-security-registration
+    repoUrl: https://github.com/Baeldung/spring-security-registration.git
+    repoLocalPath: /spring-security-registration-source-code
+    repoMasterHttpPath: https://github.com/Baeldung/spring-security-registration/tree/master
+  -
+    repoName: reddit-app
+    repoUrl: https://github.com/Baeldung/reddit-app.git
+    repoLocalPath: /reddit-app-source-code
+    repoMasterHttpPath: https://github.com/Baeldung/reddit-app/tree/master
+  -
+    repoName: java-stackexchange
+    repoUrl: https://github.com/eugenp/java-stackexchange.git
+    repoLocalPath: /java-stackexchange-source-code
+    repoMasterHttpPath: https://github.com/eugenp/java-stackexchange/tree/master
+  -
+    repoName: stackexchange2twitter
+    repoUrl: https://github.com/eugenp/stackexchange2twitter.git
+    repoLocalPath: /stackexchange2twitter-source-code
+    repoMasterHttpPath: https://github.com/eugenp/stackexchange2twitter/tree/master
+  -
+    repoName: oauth-microservices
+    repoUrl: https://github.com/Baeldung/oauth-microservices.git
+    repoLocalPath: /oauth-microservices-source-code
+    repoMasterHttpPath: https://github.com/Baeldung/oauth-microservices/tree/master
+  -
+    repoName: datastax-cassandra
+    repoUrl: https://github.com/Baeldung/datastax-cassandra.git
+    repoLocalPath: /datastax-cassandra-source-code
+    repoMasterHttpPath: https://github.com/Baeldung/datastax-cassandra/tree/main
