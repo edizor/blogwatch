@@ -22,7 +22,7 @@ import com.google.common.collect.Multimap;
 public class Crawler4JTest extends BaseCrawler4JTest {
 
     @Value("${givenAllTheArticles_whenAnArticleLoads_thenJavaClassesAndMethodsCanBeFoundOnGitHub.file-for-javaConstructs-test}")
-    private String fileForJavaConstructsTest;   
+    private String fileForJavaConstructsTest;
 
     @Tag("matchJavaConstructs")
     @Test
@@ -59,7 +59,7 @@ public class Crawler4JTest extends BaseCrawler4JTest {
                     List<JavaConstruct> javaConstructsOnPost = Utils.getJavaConstructsFromPreTagsInTheJSoupDocument(jSoupDocument);
 
                     // find Java constructs not found in GitHub module
-                    Utils.filterAndCollectJacaConstructsNotFoundOnGitHub(javaConstructsOnPost, javaConstructsOnGitHub, results, postUrl);
+                    Utils.filterAndCollectJavaConstructsNotFoundOnGitHub(javaConstructsOnPost, javaConstructsOnGitHub, results, postUrl);
                 } catch (Exception e) {
                     logger.error("Error occurened while process:" + postUrl + " .Error message:" + e.getMessage());
                 }
