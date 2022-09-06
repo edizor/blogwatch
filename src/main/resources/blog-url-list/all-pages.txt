@@ -78,3 +78,4 @@
 /cs-author-contact
 /security-video-guide
 /maven-ebook
+/all-bulk-team-courses
