@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
@@ -486,27 +487,26 @@ public class Utils {
         }
     }
 
-    public static String getGitHubModuleUrl(String postUrl) throws IOException {
+    public static List<String> getGitHubModuleUrl(String postUrl) throws IOException {
         Document jSoupDocument = Utils.getJSoupDocument(postUrl);
         Elements links = jSoupDocument.select("section a[href*='" + GlobalConstants.GITHUB_REPO_EUGENP + "'],section a[href*='" + GlobalConstants.GITHUB_REPO_BAELDUNG + "']");
 
         if (CollectionUtils.isEmpty(links)) {
-            return null;
+            return Collections.emptyList();
         }
 
-        String gitHubUrl;
-        if (links.size() > 1) {
-            logger.debug("More than one GitHub links Found on :" + postUrl);
-            logger.debug("Will pickup ther last from the following URLs");
-            List<String> gitHubUrls = new ArrayList<>();
-            links.forEach(element -> gitHubUrls.add(element.absUrl("href")));
-            logger.debug(gitHubUrls.toString());
-        }
-        // TODO JAVA-13330: we need to return all found github urls here
-        gitHubUrl = links.get(links.size() - 1).absUrl("href");
+        List<String> gitHubUrls = new ArrayList<>();
+        links.forEach(element -> gitHubUrls.add(element.absUrl("href")));
 
-        Response response = Jsoup.connect(gitHubUrl).followRedirects(true).execute();
-        return response.url().toString();
+        // resolve redirections
+        return gitHubUrls.stream().map(gitHubUrl -> {
+            try {
+                Response response = Jsoup.connect(gitHubUrl).followRedirects(true).execute();
+                return response.url().toString();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }).collect(toList());
     }
 
     public static List<JavaConstruct> getDiscoveredJavaArtifacts(List<Object> discoveredURLs) {
@@ -563,6 +563,10 @@ public class Utils {
         return resutls;
     }
 
+    /**
+     * @deprecated Subject to removal after we completely migrate Crawler4JTest to JavaConstructsTest
+     */
+    @Deprecated
     public static Multimap<String, String> createMapForGitHubModuleAndPosts(String baseURL, String fileForJavaConstructsTest, RateLimiter rateLimiter) throws IOException {
         Multimap<String, String> gitHubModuleAndPostsMap = ArrayListMultimap.create();
         String postUrl = null;
@@ -575,7 +579,12 @@ public class Utils {
                     continue;
                 }
 
-                String gitHubUrl = Utils.getGitHubModuleUrl(postUrl);
+                List<String> gitHubUrls = Utils.getGitHubModuleUrl(postUrl);
+                logger.debug("More than one GitHub links Found on :" + postUrl);
+                logger.debug("Will pickup ther last from the following URLs");
+                logger.debug(gitHubUrls.toString());
+                String gitHubUrl = gitHubUrls.get(gitHubUrls.size() - 1);
+
                 if (StringUtils.isBlank(gitHubUrl)) {
                     continue;
                 }
