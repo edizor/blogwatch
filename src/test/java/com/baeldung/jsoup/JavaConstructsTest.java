@@ -66,19 +66,23 @@ public class JavaConstructsTest extends BaseJsoupTest {
         List<String> posts = Utils.fetchFileAsList(fileForJavaConstructsTest);
         for (String url : posts) {
             String postUrl = baseURL + url;
-            logger.info("Processing:  " + postUrl);
+            logger.info("Processing: {}", postUrl);
             rateLimiter.acquire();
-            String gitHubUrl = Utils.getGitHubModuleUrl(postUrl);
-            if (gitHubUrl == null) {
+            List<String> gitHubUrls = Utils.getGitHubModuleUrl(postUrl);
+            if (gitHubUrls.isEmpty()) {
                 // no GitHub url found, no-op
                 continue;
             }
-            final Path modulePath = Utils.getLocalPathByGithubUrl(gitHubUrl);
-            if (modulePath == null) {
-                logger.warn("cannot find local path for Github URL: {}", gitHubUrl);
-                continue;
+
+            for (String gitHubUrl : gitHubUrls) {
+                final Path modulePath = Utils.getLocalPathByGithubUrl(gitHubUrl);
+                if (modulePath == null) {
+                    logger.warn("cannot find local path, Github URL: {} in post: {}", gitHubUrl, postUrl);
+                    continue;
+                }
+                postUrlsToGithubModuleLocalPaths.put(postUrl, modulePath);
             }
-            postUrlsToGithubModuleLocalPaths.put(postUrl, modulePath);
+            
         }
         logger.info("Finished - creating Map for Posts to Github Modules");
 
