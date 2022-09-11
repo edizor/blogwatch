@@ -26,10 +26,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
@@ -111,7 +114,7 @@ public class Utils {
 
     public static List<String> fetchFileAsList(String fileName) throws IOException {
         File file = new File(Utils.class.getClassLoader().getResource(GlobalConstants.BLOG_URL_LIST_RESOUCE_FOLDER_PATH + fileName).getPath());
-        return Files.lines(Paths.get(file.getAbsolutePath())).collect(Collectors.toList());
+        return Files.readAllLines(file.toPath());
     }
 
     public static Stream<String> fetchFilesAsList(List<String> fileNames) throws IOException {
@@ -272,10 +275,11 @@ public class Utils {
 
     }
 
-    public static void removeTrailingSlash(String firstURL) {
-        if (null != firstURL && firstURL.charAt(firstURL.length() - 1) == '/') {
-            firstURL = firstURL.substring(0, firstURL.length());
+    public static String removeTrailingSlash(String url) {
+        if (null != url && url.charAt(url.length() - 1) == '/') {
+            return url.substring(0, url.length() - 1);
         }
+        return url;
     }
 
     public static String getAbsolutePathToFileInSrc(String fileName) {
@@ -426,6 +430,12 @@ public class Utils {
         return javaConstructs;
     }
 
+    public static List<JavaConstruct> getJavaConstructsFromLocalJavaFile(Path javaFile) throws IOException {
+        List<JavaConstruct> javaConstructs = new ArrayList<>();
+        getJavaConstructsFromJavaCode(Files.readString(javaFile), javaConstructs);
+        return javaConstructs;
+    }
+
     private static void getJavaConstructsFromJavaCode(String code, List<JavaConstruct> javaConstructs) {
         final ParseResult<CompilationUnit> compilationUnit = new JavaParser().parse(code);
 
@@ -461,9 +471,11 @@ public class Utils {
     private static void getJavaConstructsFromJavaCodeWrappingIntoDummyClass(String code, List<JavaConstruct> javaConstructs) {
         final ParseResult<CompilationUnit> compilationUnit = new JavaParser().parse(GlobalConstants.CONSTRUCT_DUMMY_CLASS_START + code + GlobalConstants.CONSTRUCT_DUMMY_CLASS_END);
 
-        if (!compilationUnit.getProblems()
-            .isEmpty()) {
-            logger.error("Error occured while processing Java code: " + compilationUnit.getProblems().iterator().next().getMessage().substring(0,100) + "\n" + code);
+        if (!compilationUnit.getProblems().isEmpty()) {
+            final String message = compilationUnit.getProblems()
+                .get(0)
+                .getMessage();
+            logger.error("Error occurred while processing Java code: {}\n{}", message.substring(0, Math.min(message.length(), 100)),  code);
         } else {
             compilationUnit.getResult()
                 .ifPresent(result -> result.findAll(ClassOrInterfaceDeclaration.class)
@@ -475,28 +487,26 @@ public class Utils {
         }
     }
 
-    public static String getGitHubModuleUrl(Document jSoupDocument, String url) throws IOException {
-        String gitHubUrl = null;
+    public static List<String> getGitHubModuleUrl(String postUrl) throws IOException {
+        Document jSoupDocument = Utils.getJSoupDocument(postUrl);
         Elements links = jSoupDocument.select("section a[href*='" + GlobalConstants.GITHUB_REPO_EUGENP + "'],section a[href*='" + GlobalConstants.GITHUB_REPO_BAELDUNG + "']");
 
         if (CollectionUtils.isEmpty(links)) {
-            return gitHubUrl;
+            return Collections.emptyList();
         }
 
-        if (links.size() > 1) {
-            logger.debug("More than one GitHub links Found on :" + url);
-            logger.debug("Will pickup ther last from the following URLs");
-            List<String> gitHubUrls = new ArrayList<>();
-            links.forEach(element -> gitHubUrls.add(element.absUrl("href")));
-            logger.debug(gitHubUrls.toString());
-        }
-        gitHubUrl = links.get(links.size() - 1).absUrl("href");
+        List<String> gitHubUrls = new ArrayList<>();
+        links.forEach(element -> gitHubUrls.add(element.absUrl("href")));
 
-        Response response = Jsoup.connect(gitHubUrl).followRedirects(true).execute();
-        if (null != response) {
-            return response.url().toString();
-        }
-        return gitHubUrl;
+        // resolve redirections
+        return gitHubUrls.stream().map(gitHubUrl -> {
+            try {
+                Response response = Jsoup.connect(gitHubUrl).followRedirects(true).execute();
+                return response.url().toString();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }).collect(toList());
     }
 
     public static List<JavaConstruct> getDiscoveredJavaArtifacts(List<Object> discoveredURLs) {
@@ -508,7 +518,7 @@ public class Utils {
         return allJavaConstructs;
     }
 
-    public static void filterAndCollectJacaConstructsNotFoundOnGitHub(List<JavaConstruct> javaConstructsOnPost, List<JavaConstruct> javaConstructsOnGitHub, Multimap<String, JavaConstruct> results, String url) {
+    public static void filterAndCollectJavaConstructsNotFoundOnGitHub(List<JavaConstruct> javaConstructsOnPost, List<JavaConstruct> javaConstructsOnGitHub, Multimap<String, JavaConstruct> results, String url) {
         javaConstructsOnPost.forEach(javaConstructOnPage -> {
             if (javaConstructsOnGitHub.stream().filter(javaConstructOnGitHub -> javaConstructOnPage.equalsTo(javaConstructOnGitHub)).count() > 0) {
                 javaConstructOnPage.setFoundOnGitHub(true);
@@ -553,21 +563,28 @@ public class Utils {
         return resutls;
     }
 
+    /**
+     * @deprecated Subject to removal after we completely migrate Crawler4JTest to JavaConstructsTest
+     */
+    @Deprecated
     public static Multimap<String, String> createMapForGitHubModuleAndPosts(String baseURL, String fileForJavaConstructsTest, RateLimiter rateLimiter) throws IOException {
         Multimap<String, String> gitHubModuleAndPostsMap = ArrayListMultimap.create();
-        String url = null;
+        String postUrl = null;
         for (String entry : Utils.fetchFileAsList(fileForJavaConstructsTest)) {
             try {
                 rateLimiter.acquire();
-                url = baseURL + entry;
-                logger.info("Processing:  " + url);
-                if (Utils.excludePage(url, GlobalConstants.ARTILCE_JAVA_WEEKLY, false)) {
+                postUrl = baseURL + entry;
+                logger.info("Processing:  " + postUrl);
+                if (Utils.excludePage(postUrl, GlobalConstants.ARTILCE_JAVA_WEEKLY, false)) {
                     continue;
                 }
 
-                Document jSoupDocument = Utils.getJSoupDocument(url);
+                List<String> gitHubUrls = Utils.getGitHubModuleUrl(postUrl);
+                logger.debug("More than one GitHub links Found on :" + postUrl);
+                logger.debug("Will pickup ther last from the following URLs");
+                logger.debug(gitHubUrls.toString());
+                String gitHubUrl = gitHubUrls.get(gitHubUrls.size() - 1);
 
-                String gitHubUrl = Utils.getGitHubModuleUrl(jSoupDocument, url);
                 if (StringUtils.isBlank(gitHubUrl)) {
                     continue;
                 }
@@ -575,10 +592,10 @@ public class Utils {
                     gitHubUrl = gitHubUrl.substring(0, gitHubUrl.length() - 1);
                 }
 
-                gitHubModuleAndPostsMap.put(gitHubUrl, url);
+                gitHubModuleAndPostsMap.put(gitHubUrl, postUrl);
 
             } catch (Exception e) {
-                logger.error("Error occurened in createMapForGitHubModuleAndPosts while process:" + url + " .Error message:" + e.getMessage());
+                logger.error("Error occurened in createMapForGitHubModuleAndPosts while process:{} .Error message: {}", postUrl, e.getMessage());
             }
 
         }
@@ -827,17 +844,19 @@ public class Utils {
     }
 
     public static String changeLiveUrlWithStaging8(String liveUrl) {
-        String staging8Url = null;
-        if (liveUrl.startsWith("https")) {
-            staging8Url = liveUrl.replace(GlobalConstants.BAELDUNG_HOME_PAGE_URL, GlobalConstants.STAGEING8_HOME_URL);
-        }else if (liveUrl.startsWith("http")) {
-            staging8Url = liveUrl.replace(GlobalConstants.BAELDUNG_HOME_PAGE_URL_WITH_HTTP, GlobalConstants.STAGEING8_HOME_URL);
-        }
-        else {
-            staging8Url = liveUrl.replace(GlobalConstants.BAELDUNG_HOME_PAGE_URL_WIThOUT_THE_PROTOCOL, GlobalConstants.STAGEING8_HOME_URL);
-        }
+        return changeLiveUrlWithBase(liveUrl, GlobalConstants.STAGEING8_HOME_URL);
+    }
 
-        return staging8Url;
+    public static String changeLiveUrlWithBase(String liveUrl, String baseUrl) {
+        String url;
+        if (liveUrl.startsWith("https")) {
+            url = liveUrl.replace(GlobalConstants.BAELDUNG_HOME_PAGE_URL, baseUrl);
+        } else if (liveUrl.startsWith("http")) {
+            url = liveUrl.replace(GlobalConstants.BAELDUNG_HOME_PAGE_URL_WITH_HTTP, baseUrl);
+        } else {
+            url = liveUrl.replace(GlobalConstants.BAELDUNG_HOME_PAGE_URL_WIThOUT_THE_PROTOCOL, baseUrl);
+        }
+        return url;
     }
 
     public static void sleep(int millis) {
@@ -964,6 +983,16 @@ public class Utils {
         return links;
     }
 
+    public static Path getLocalPathByGithubUrl(String githubModuleUrl) {
+        if (githubModuleUrl == null) {
+            return null;
+        }
+        final Optional<Path> modulePath = tutorialsRepos.stream()
+            .map(r -> r.getLocalPathByUrl(githubModuleUrl))
+            .filter(Objects::nonNull)
+            .findFirst();
+        return modulePath.orElse(null);
+    }
 
     public static Function<String, String> replaceTutorialLocalPathWithHttpUrl(String repoLocalPath, String repoHttpPath){
         return path -> repoHttpPath.concat(StringUtils.removeStart(path, repoLocalPath));

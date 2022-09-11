@@ -1,4 +1,4 @@
-package com.baeldung.crawler4j.unittest;
+package com.baeldung.jsoup.unittest;
 
 import static com.baeldung.common.GlobalConstants.CODE_TAG;
 import static com.baeldung.common.GlobalConstants.LANGUAGE_JAVA_CLASS_NAME;

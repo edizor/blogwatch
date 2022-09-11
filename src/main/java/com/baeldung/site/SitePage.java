@@ -342,7 +342,7 @@ public class SitePage extends BlogBaseDriver {
             if (StringUtils.isEmpty(firstURL)) {
                 return gitHubModuleLinks;
             }
-            Utils.removeTrailingSlash(firstURL);
+            firstURL = Utils.removeTrailingSlash(firstURL);
             gitHubModuleLinks.add(firstURL);
 
             // secondURL- master module URL (immediate child of /master)
@@ -361,7 +361,7 @@ public class SitePage extends BlogBaseDriver {
 
             // thirdURL - immediate parent module of initial(first) URL
             String thirdURL = firstURL.substring(0, firstURL.lastIndexOf("/"));
-            Utils.removeTrailingSlash(thirdURL);
+            thirdURL = Utils.removeTrailingSlash(thirdURL);
             if (!urlAlreadyAdded(gitHubModuleLinks, thirdURL) && !parentRepoURL(thirdURL)) {
                 gitHubModuleLinks.add(thirdURL);
             }

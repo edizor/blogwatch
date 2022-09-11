@@ -12,9 +12,9 @@ import com.baeldung.common.config.MyApplicationContextInitializer;
 
 @ContextConfiguration(classes = { CommonConfig.class }, initializers = MyApplicationContextInitializer.class)
 @ExtendWith(SpringExtension.class)
-public class BaseJsoupTest extends BaseTest{
-    
+public class BaseJsoupTest extends BaseTest {
+
     @Value("${base.url}")
-    protected String baseURL;    
-    
+    protected String baseURL;
+
 }

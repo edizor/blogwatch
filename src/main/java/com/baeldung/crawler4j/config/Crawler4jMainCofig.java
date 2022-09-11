@@ -16,7 +16,7 @@ import edu.uci.ics.crawler4j.robotstxt.RobotstxtServer;
 
 @Configuration
 @ComponentScan("com.baeldung.crawler4j")
-@PropertySource({ "classpath:blog.properties" })
+@PropertySource({ "classpath:common.properties" })
 public class Crawler4jMainCofig {
 
     @Bean

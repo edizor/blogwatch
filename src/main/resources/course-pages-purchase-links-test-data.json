@@ -24,8 +24,8 @@
       },
       {
         "linkId": "rws-ls-cmb-tb",
-        "link": "https://courses.baeldung.com/purchase?product_id=3632679",
-        "redirectsTo": "https://sso.teachable.com/secure/22136/checkout/3632679/ls-rws-certification-class"
+        "link": "https://courses.baeldung.com/purchase?product_id=4242714",
+        "redirectsTo": "https://sso.teachable.com/secure/22136/checkout/4242714/ls-rws-certification-class"
       }      
     ]
   },
@@ -124,8 +124,8 @@
     },
     {
         "linkId": "lss-rws-cmb-tb",
-        "link": "https://courses.baeldung.com/purchase?product_id=2854599",
-        "redirectsTo": "https://sso.teachable.com/secure/22136/checkout/2854599/lss-rws-certification-class"
+        "link": "https://courses.baeldung.com/purchase?product_id=4242676",
+        "redirectsTo": "https://sso.teachable.com/secure/22136/checkout/4242676/lss-rws-certification-class"
     }
    ]
   },
