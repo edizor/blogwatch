@@ -817,9 +817,8 @@ public class Utils {
 
         logger.info(colordHeading("Please find below child modules for: {}"), tutorialsParentModuleFinderFileVisitor.getArtificateId());
 
-        GitHubRepoVO tutorialsRepo = GithubRepositories.getRepositoryByName("tutorials");
         tutorialsParentModuleFinderFileVisitor.getChildModules().forEach(modulePath -> {
-            String gitUrl = StringUtils.removeEnd(StringUtils.removeStart(modulePath, tutorialsRepo.repoLocalPath()), "pom.xml");
+            String gitUrl = StringUtils.removeEnd(StringUtils.removeStart(modulePath, GithubRepositories.TUTORIALS.repoLocalPath()), "pom.xml");
             System.out.println("https://github.com/eugenp/tutorials/tree/master" + gitUrl);
         });
     }
@@ -887,9 +886,8 @@ public class Utils {
 
         logger.info(colordHeading("Please find below unalighed Moudles"));
 
-        GitHubRepoVO tutorialsRepo = GithubRepositories.getRepositoryByName("tutorials");
         moduleAlignmentValidatorFileVisitor.getInvalidModules().forEach(modulePath -> {
-            String gitUrl = StringUtils.removeEnd(StringUtils.removeStart(modulePath, tutorialsRepo.repoLocalPath()), "pom.xml");
+            String gitUrl = StringUtils.removeEnd(StringUtils.removeStart(modulePath, GithubRepositories.TUTORIALS.repoLocalPath()), "pom.xml");
             System.out.println("https://github.com/eugenp/tutorials/tree/master" + gitUrl);
         });
     }
@@ -899,9 +897,8 @@ public class Utils {
             logger.info(colordHeading("The auotmation coundn't parse folloiwng modues. Please report these to devOps-dev"));
         }
 
-        GitHubRepoVO tutorialsRepo = GithubRepositories.getRepositoryByName("tutorials");
         moduleAlignmentValidatorFileVisitor.getUnparsableModule().forEach(modulePath -> {
-            String gitUrl = StringUtils.removeEnd(StringUtils.removeStart(modulePath, tutorialsRepo.repoLocalPath()), "pom.xml");
+            String gitUrl = StringUtils.removeEnd(StringUtils.removeStart(modulePath, GithubRepositories.TUTORIALS.repoLocalPath()), "pom.xml");
             System.out.println("https://github.com/eugenp/tutorials/tree/master" + gitUrl);
         });
     }

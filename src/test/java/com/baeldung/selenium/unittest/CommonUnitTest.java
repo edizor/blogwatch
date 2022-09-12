@@ -61,7 +61,7 @@ public class CommonUnitTest {
 
     @Test
     void givenAReadmeWithLocalSystemPath_whenConvertToHttpURL_itReturn200OK() throws IOException {
-        final GitHubRepoVO tutorialsRepo = GithubRepositories.getRepositoryByName("tutorials");
+        final GitHubRepoVO tutorialsRepo = GithubRepositories.TUTORIALS;
         assertNotNull(tutorialsRepo);
 
         final Path module = findRandomModuleFromLocalRepositories(List.of(tutorialsRepo));

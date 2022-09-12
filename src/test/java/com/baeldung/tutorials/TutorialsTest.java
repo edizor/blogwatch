@@ -45,7 +45,7 @@ public class TutorialsTest extends BaseTest {
 
         List<String> testExceptions = getTestExceptions(testInfo);
 
-        GitHubRepoVO tutorialsRepo = GithubRepositories.getRepositoryByName("tutorials");
+        GitHubRepoVO tutorialsRepo = GithubRepositories.TUTORIALS;
         Utils.fetchGitRepo(GlobalConstants.YES, tutorialsRepo);
 
         MavenModulesDetailsFileVisitor modulesFileVisitor = new MavenModulesDetailsFileVisitor(tutorialsRepo.repoLocalPath());

@@ -28,6 +28,8 @@ public class GithubRepositories {
             .forEach(repositories::add);
     }
 
+    public static final GitHubRepoVO TUTORIALS = getRepositoryByName("tutorials");
+
     public static List<GitHubRepoVO> getRepositories() {
         // return immutable list
         return List.copyOf(repositories);

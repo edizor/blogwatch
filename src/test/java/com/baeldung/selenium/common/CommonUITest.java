@@ -524,10 +524,9 @@ public class CommonUITest extends BaseUISeleniumTest {
         }
 
         //fetch tutorials repo
-        GitHubRepoVO tutorialsRepo = GithubRepositories.getRepositoryByName("tutorials");
-        Utils.fetchGitRepo(this.redownloadTutorialsRepo, tutorialsRepo);
+        Utils.fetchGitRepo(this.redownloadTutorialsRepo, GithubRepositories.TUTORIALS);
 
-        Path repoDirectoryPath = Paths.get(tutorialsRepo.repoLocalPath());
+        Path repoDirectoryPath = Paths.get(GithubRepositories.TUTORIALS.repoLocalPath());
         TutorialsParentModuleFinderFileVisitor tutorialsParentModuleFinderFileVisitor = new TutorialsParentModuleFinderFileVisitor(parentArtifactId);
         Files.walkFileTree(repoDirectoryPath, tutorialsParentModuleFinderFileVisitor);
         Utils.logChildModulesResults(tutorialsParentModuleFinderFileVisitor);
@@ -541,10 +540,9 @@ public class CommonUITest extends BaseUISeleniumTest {
         recordExecution(GlobalConstants.givenTutorialsRepo_whenAllModulesAnalysed_thenFolderNameAndArtifiactIdAndModuleNameMatch);
 
         //fetch tutorials repo
-        GitHubRepoVO tutorialsRepo = GithubRepositories.getRepositoryByName("tutorials");
-        Utils.fetchGitRepo(this.redownloadTutorialsRepo, tutorialsRepo);
+        Utils.fetchGitRepo(this.redownloadTutorialsRepo, GithubRepositories.TUTORIALS);
 
-        Path repoDirectoryPath = Paths.get(tutorialsRepo.repoLocalPath());
+        Path repoDirectoryPath = Paths.get(GithubRepositories.TUTORIALS.repoLocalPath());
         ModuleAlignmentValidatorFileVisitor moduleAlignmentValidatorFileVisitor = new ModuleAlignmentValidatorFileVisitor();
         Files.walkFileTree(repoDirectoryPath, moduleAlignmentValidatorFileVisitor);
 

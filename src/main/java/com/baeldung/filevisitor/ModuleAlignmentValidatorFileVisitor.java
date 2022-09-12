@@ -25,8 +25,7 @@ import com.baeldung.common.YAMLProperties;
 
 public class ModuleAlignmentValidatorFileVisitor extends SimpleFileVisitor<Path> {
 
-    private static final String TUTORIALS_REPOSITORY_LOCAL_PATH = GithubRepositories
-        .getRepositoryByName("tutorials").repoLocalPath();
+    private static final String TUTORIALS_REPOSITORY_LOCAL_PATH = GithubRepositories.TUTORIALS.repoLocalPath();
 
     protected Logger logger = LoggerFactory.getLogger(getClass());
 
