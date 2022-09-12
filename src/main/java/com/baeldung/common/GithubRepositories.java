@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.baeldung.common.config.SpringPropertiesReader;
 import com.baeldung.common.vo.GitHubRepoVO;
 
 /**
@@ -11,7 +12,7 @@ import com.baeldung.common.vo.GitHubRepoVO;
  */
 public class GithubRepositories {
 
-    private static final String localRepoBasePath = System.getProperty("local.repo.basepath", "/var/lib/jenkins");
+    private static final String localRepoBasePath = SpringPropertiesReader.get("local.repo.basepath");
 
     private static final Set<GitHubRepoVO> repositories = new HashSet<>();
 
