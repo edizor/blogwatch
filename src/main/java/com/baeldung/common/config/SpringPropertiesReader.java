@@ -7,7 +7,7 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.MutablePropertySources;
-import org.springframework.core.env.PropertySourcesPropertyResolver;
+import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.support.ResourcePropertySource;
 
 import com.baeldung.common.GlobalConstants;
@@ -24,11 +24,12 @@ public class SpringPropertiesReader {
             .split(",")
     ).map(String::trim).toArray(String[]::new);
 
-    private static final MutablePropertySources propertySources = new MutablePropertySources();
-    private static final PropertySourcesPropertyResolver propertyResolver = new PropertySourcesPropertyResolver(propertySources);
+    private static final StandardEnvironment environment = new StandardEnvironment();
 
     static {
         logger.info("Spring Active Profiles: {}", Arrays.toString(activeProfiles));
+        environment.setActiveProfiles(activeProfiles);
+        final MutablePropertySources propertySources = environment.getPropertySources();
         for (String profile : activeProfiles) {
             try {
                 propertySources.addFirst(new ResourcePropertySource("classpath:%s.properties".formatted(profile)));
@@ -40,12 +41,12 @@ public class SpringPropertiesReader {
         }
     }
 
-    public static String[] getActiveProfiles() {
-        return activeProfiles;
+    public static StandardEnvironment getEnvironment() {
+        return environment;
     }
 
     public static String get(String key) {
-        return propertyResolver.getProperty(key);
+        return environment.getProperty(key);
     }
 
 }

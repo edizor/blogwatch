@@ -16,8 +16,8 @@ public class MyApplicationContextInitializer implements ApplicationContextInitia
     @Override
     public void initialize(ConfigurableApplicationContext applicationContext) {
         final ConfigurableEnvironment environment = applicationContext.getEnvironment();
-
-        environment.setActiveProfiles(SpringPropertiesReader.getActiveProfiles());
+        // we merge our pre-initialized environment into Spring provided one
+        environment.merge(SpringPropertiesReader.getEnvironment());
         final String baseURL = environment.getProperty(GlobalConstants.ENV_PROPERTY_BASE_URL);
         final String targetEnv = environment.getProperty(GlobalConstants.ENV_PROPERTY_TARGET_ENV);
         final String headlessBrowserName = environment.getProperty(GlobalConstants.ENV_PROPERTY_TARGET_ENV);
