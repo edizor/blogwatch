@@ -155,12 +155,8 @@ givenTheTutorialsRepository_listAllTheModulesThatAreNotBuildInBothDefautlAndInte
   - /core-java-modules/core-java-16/
   - /core-java-modules/core-java-17/
   - /core-java-modules/core-java-9-new-features/
-  - /ethereum/
   - /guest/
-  - /rule-engines/jess/
-  - /security-modules/
-  - /spring-jinq/
-
+  
 givenAGitHubModuleReadme_whenAnalysingTheReadme_thentheReadmeDoesNotLikTooManyArticles:
   - https://github.com/eugenp/tutorials/tree/master/spring-boot-rest/README.md
   - https://github.com/eugenp/tutorials/tree/master/spring-5-reactive-modules/spring-reactive/README.md
