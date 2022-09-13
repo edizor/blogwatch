@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 
+import com.baeldung.common.GithubRepositories;
 import com.baeldung.common.GlobalConstants;
 import com.baeldung.common.GlobalConstants.TestMetricTypes;
 import com.baeldung.common.Utils;
@@ -42,7 +43,7 @@ public class JavaConstructsTest extends BaseJsoupTest {
     @BeforeEach
     public void loadGitHubRepositories() {
         logger.info("Loading Github repositories into local");
-        for (GitHubRepoVO gitHubRepo : GlobalConstants.tutorialsRepos) {
+        for (GitHubRepoVO gitHubRepo : GithubRepositories.getRepositories()) {
             try {
                 Utils.fetchGitRepo(redownloadRepo, Paths.get(gitHubRepo.repoLocalPath()), gitHubRepo.repoUrl());
             } catch (Exception e) {

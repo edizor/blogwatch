@@ -991,8 +991,8 @@ public class Utils {
     public static Path getLocalPathByGithubUrl(String githubModuleUrl) {
         if (githubModuleUrl == null) {
             return null;
-        }
-        final Optional<Path> modulePath = tutorialsRepos.stream()
+        } 
+        final Optional<Path> modulePath = GithubRepositories.getRepositories().stream()
             .map(r -> r.getLocalPathByUrl(githubModuleUrl))
             .filter(Objects::nonNull)
             .findFirst();
@@ -1003,7 +1003,7 @@ public class Utils {
         return path -> repoHttpPath.concat(StringUtils.removeStart(path, repoLocalPath));
     }
 
-    public static Function<String, String> replaceJavaTutorialLocalPathWithHttpUrl = path -> tutorialsRepoMasterPath.concat(StringUtils.removeStart(path, tutorialsRepoLocalPath));
+    //public static Function<String, String> replaceJavaTutorialLocalPathWithHttpUrl = path -> tutorialsRepoMasterPath.concat(StringUtils.removeStart(path, tutorialsRepoLocalPath));
 
     public static List<String> getLinksToTheBaeldungSite(Document doc) {
         Elements baeldungUrls = doc.select("a[href*="+GlobalConstants.BAELDUNG_DOMAIN_NAME+"]");
