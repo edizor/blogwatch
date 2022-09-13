@@ -49,6 +49,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import com.baeldung.common.ConsoleColors;
+import com.baeldung.common.GithubRepositories;
 import com.baeldung.common.GlobalConstants;
 import com.baeldung.common.GlobalConstants.TestMetricTypes;
 import com.baeldung.common.TestMetricsExtension;
@@ -274,9 +275,7 @@ public class CommonUITest extends BaseUISeleniumTest {
                     List<LinkVO> urlsInReadmeFile = Utils.extractBaeldungLinksFromReadmeFile(Path.of(readmePath)); // get all the articles linked in this README
                     urlsInReadmeFile.forEach(link -> {
                         String staging8Url = Utils.changeLiveUrlWithStaging8(link.getLink());
-                        String readmeParentURL = Utils.replaceTutorialLocalPathWithHttpUrl(repo.repoLocalPath(), repo.repoMasterHttpPath())
-                            .apply(reamdmeParentPath);
-
+                        String readmeParentURL = repo.getHttpUrlByLocalPath(reamdmeParentPath);
                         page.setUrl(staging8Url);
                         page.loadUrl(); // loads an article in the browser
                         if (!page.containsGithubModuleLink(readmeParentURL)) {
@@ -312,17 +311,18 @@ public class CommonUITest extends BaseUISeleniumTest {
             readmesPathList.forEach(readmePath -> {
                 try {
                     String replacedPath = readmePath.replace("\\", "/");
-                    if(testExceptions.contains(Utils.replaceJavaTutorialLocalPathWithHttpUrl.apply(replacedPath))) {
+                    if(testExceptions.contains(repo.getHttpUrlByLocalPath(replacedPath))) {
                         return;
                     }
                     int baeldungUrlsCount = Utils.getLinksToTheBaeldungSite(readmePath); // get all the articles linked in this README
                     // for documenting no of links per README
                     if (readmePath.toLowerCase().contains("spring")) {
                         if (baeldungUrlsCount > limitForSpringRelatedReadmeHavingArticles) {
-                            articleCountByReadme.put(Utils.replaceTutorialLocalPathWithHttpUrl(repo.repoLocalPath(), repo.repoMasterHttpPath()).apply(readmePath), baeldungUrlsCount);
+
+                            articleCountByReadme.put(repo.getHttpUrlByLocalPath(readmePath), baeldungUrlsCount);
                         }
                     } else if (baeldungUrlsCount > limitForReadmeHavingArticles) {
-                        articleCountByReadme.put(Utils.replaceTutorialLocalPathWithHttpUrl(repo.repoLocalPath(), repo.repoMasterHttpPath()).apply(readmePath), baeldungUrlsCount);
+                        articleCountByReadme.put(repo.getHttpUrlByLocalPath(readmePath), baeldungUrlsCount);
                     }
                 } catch (Exception e) {
                     logger.debug("Error while processing " + readmePath + " \nError message" + e.getMessage());
@@ -524,10 +524,9 @@ public class CommonUITest extends BaseUISeleniumTest {
         }
 
         //fetch tutorials repo
-        String repoLocalDirectory = GlobalConstants.tutorialsRepoLocalPath;
-        Path repoDirectoryPath = Paths.get(repoLocalDirectory);
-        Utils.fetchGitRepo(this.redownloadTutorialsRepo, repoDirectoryPath, GlobalConstants.tutorialsRepoGitUrl);
+        Utils.fetchGitRepo(this.redownloadTutorialsRepo, GithubRepositories.TUTORIALS);
 
+        Path repoDirectoryPath = Paths.get(GithubRepositories.TUTORIALS.repoLocalPath());
         TutorialsParentModuleFinderFileVisitor tutorialsParentModuleFinderFileVisitor = new TutorialsParentModuleFinderFileVisitor(parentArtifactId);
         Files.walkFileTree(repoDirectoryPath, tutorialsParentModuleFinderFileVisitor);
         Utils.logChildModulesResults(tutorialsParentModuleFinderFileVisitor);
@@ -541,10 +540,9 @@ public class CommonUITest extends BaseUISeleniumTest {
         recordExecution(GlobalConstants.givenTutorialsRepo_whenAllModulesAnalysed_thenFolderNameAndArtifiactIdAndModuleNameMatch);
 
         //fetch tutorials repo
-        String repoLocalDirectory = GlobalConstants.tutorialsRepoLocalPath;
-        Path repoDirectoryPath = Paths.get(repoLocalDirectory);
-        Utils.fetchGitRepo(this.redownloadTutorialsRepo, repoDirectoryPath, GlobalConstants.tutorialsRepoGitUrl);
+        Utils.fetchGitRepo(this.redownloadTutorialsRepo, GithubRepositories.TUTORIALS);
 
+        Path repoDirectoryPath = Paths.get(GithubRepositories.TUTORIALS.repoLocalPath());
         ModuleAlignmentValidatorFileVisitor moduleAlignmentValidatorFileVisitor = new ModuleAlignmentValidatorFileVisitor();
         Files.walkFileTree(repoDirectoryPath, moduleAlignmentValidatorFileVisitor);
 
@@ -567,7 +565,7 @@ public class CommonUITest extends BaseUISeleniumTest {
         recordExecution(GlobalConstants.givenAGitHubModule_whenAnalysingTheModule_thenTheModuleHasANonEmptyReadme);
         List<String> modulesWithNoneOrEmptyReadme = new ArrayList<>();
 
-        for (GitHubRepoVO gitHubRepoVO : GlobalConstants.tutorialsRepos) {
+        for (GitHubRepoVO gitHubRepoVO : GithubRepositories.getRepositories()) {
             Path repoDirectoryPath =  Paths.get(gitHubRepoVO.repoLocalPath()); // Paths.get("E:\\repos_temp_dir");
 
             Utils.fetchGitRepo(GlobalConstants.YES, repoDirectoryPath, gitHubRepoVO.repoUrl());
@@ -577,15 +575,15 @@ public class CommonUITest extends BaseUISeleniumTest {
 
             modulesWithNoneOrEmptyReadme.addAll(emptyReadmeFileVisitor.getEmptyReadmeList()
                 .stream()
-                .map(Utils.replaceTutorialLocalPathWithHttpUrl(gitHubRepoVO.repoLocalPath(), gitHubRepoVO.repoMasterHttpPath()))
-                .collect(toList()));
+                .map(gitHubRepoVO::getHttpUrlByLocalPath)
+                .toList());
 
             MissingReadmeFileVisitor missingReadmeFileVisitor = new MissingReadmeFileVisitor(gitHubRepoVO.repoLocalPath());
             Files.walkFileTree(repoDirectoryPath, missingReadmeFileVisitor);
             modulesWithNoneOrEmptyReadme.addAll(missingReadmeFileVisitor.getMissingReadmeList()
                 .stream()
-                .map(Utils.replaceTutorialLocalPathWithHttpUrl(gitHubRepoVO.repoLocalPath(), gitHubRepoVO.repoMasterHttpPath()))
-                .collect(toList()));
+                .map(gitHubRepoVO::getHttpUrlByLocalPath)
+                .toList());
         }
 
         if (modulesWithNoneOrEmptyReadme.size() > 0) {
@@ -599,7 +597,7 @@ public class CommonUITest extends BaseUISeleniumTest {
     @MethodSource("com.baeldung.utility.TestUtils#noindexTagTestDataProvider")
     @Tag(GlobalConstants.TAG_NON_TECHNICAL)
     public final void givenTagCategoryAndSearchPage_whenAPageLoads_thenItContainNoindexTag(String url) {
-               
+
         String fullUrl = page.getBaseURL() + url;
         logger.info("Processing " + fullUrl);
 

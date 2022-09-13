@@ -1,6 +1,5 @@
 package com.baeldung.selenium.unittest;
 
-import static com.baeldung.common.Utils.replaceTutorialLocalPathWithHttpUrl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -11,15 +10,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Random;
 
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.baeldung.common.GithubRepositories;
 import com.baeldung.common.GlobalConstants;
 import com.baeldung.common.Utils;
 import com.baeldung.common.vo.GitHubRepoVO;
@@ -36,7 +34,7 @@ public class CommonUnitTest {
     @BeforeAll
     static void loadGitHubRepositories() {
         logger.info("Loading Github repositories into local");
-        for (GitHubRepoVO gitHubRepo : GlobalConstants.tutorialsRepos) {
+        for (GitHubRepoVO gitHubRepo : GithubRepositories.getRepositories()) {
             try {
                 Utils.fetchGitRepo(GlobalConstants.NO, Paths.get(gitHubRepo.repoLocalPath()), gitHubRepo.repoUrl());
             } catch (Exception e) {
@@ -63,17 +61,13 @@ public class CommonUnitTest {
 
     @Test
     void givenAReadmeWithLocalSystemPath_whenConvertToHttpURL_itReturn200OK() throws IOException {
-        final Optional<GitHubRepoVO> tutorialsRepo = GlobalConstants.tutorialsRepos.stream()
-            .filter(r -> r.repoName().equals("tutorials")).findFirst();
+        final GitHubRepoVO tutorialsRepo = GithubRepositories.TUTORIALS;
+        assertNotNull(tutorialsRepo);
 
-        assertTrue(tutorialsRepo.isPresent());
-        assertNotNull(tutorialsRepo.get());
-
-        final Path module = findRandomModuleFromLocalRepositories(List.of(tutorialsRepo.get()));
+        final Path module = findRandomModuleFromLocalRepositories(List.of(tutorialsRepo));
         final Path readme = module.resolve("README.md");
 
-        String httpUrl = replaceTutorialLocalPathWithHttpUrl(GlobalConstants.tutorialsRepoLocalPath, GlobalConstants.tutorialsRepoMasterPath)
-            .apply(readme.toString());
+        String httpUrl = tutorialsRepo.getHttpUrlByLocalPath(readme.toString());
         logger.info("URL to test: {}", httpUrl);
         assertEquals(200, RestAssured.given().get(httpUrl).getStatusCode());
     }
@@ -83,7 +77,7 @@ public class CommonUnitTest {
         final List<LinkVO> links = new ArrayList<>();
         int sampleCount = 3;
         while(sampleCount > 0) {
-            final Path randomModule = findRandomModuleFromLocalRepositories(GlobalConstants.tutorialsRepos);
+            final Path randomModule = findRandomModuleFromLocalRepositories(GithubRepositories.getRepositories());
             final Path readme = randomModule.resolve("README.md");
             final boolean readmeFound = Files.exists(readme);
             logger.info("randomly picked module: {}, readme found: {}", randomModule, readmeFound);

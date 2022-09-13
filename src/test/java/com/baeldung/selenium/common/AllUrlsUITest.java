@@ -11,6 +11,7 @@ import org.openqa.selenium.WebElement;
 import org.springframework.util.CollectionUtils;
 
 import com.baeldung.common.AllUrlsConcurrentExtension;
+import com.baeldung.common.GithubRepositories;
 import com.baeldung.common.GlobalConstants;
 import com.baeldung.common.GlobalConstants.TestMetricTypes;
 import com.baeldung.common.LogOnce;
@@ -303,7 +304,7 @@ public class AllUrlsUITest extends AllUrlsUIBaseTest {
         if (shouldSkipUrl(page, GlobalConstants.givenAllArticlesLinkingToGitHubModule_whenAnArticleLoads_thenLinkedGitHubModulesReturns200OK) || Utils.excludePage(page.getUrl(), GlobalConstants.ARTILCE_JAVA_WEEKLY, false)) {
             return;
         }
-        Multimap<Integer, String> notFoundUrls = TestUtils.checkLocalRepoFiles(GlobalConstants.tutorialsRepos, gitHubModulesLinkedOntheArticle);
+        Multimap<Integer, String> notFoundUrls = TestUtils.checkLocalRepoFiles(GithubRepositories.getRepositories(), gitHubModulesLinkedOntheArticle);
         if (notFoundUrls.size() > 0) {
             recordMetrics(notFoundUrls.size(), TestMetricTypes.FAILED);
             recordFailure(GlobalConstants.givenAllArticlesLinkingToGitHubModule_whenAnArticleLoads_thenLinkedGitHubModulesReturns200OK, notFoundUrls.size());
@@ -321,12 +322,12 @@ public class AllUrlsUITest extends AllUrlsUIBaseTest {
             return;
         }
 
-        if (!TestUtils.checkLocalRepoArticleLinkFoundOnModule(GlobalConstants.tutorialsRepos, linksToTheGithubModule, articleRelativeUrl)) {
+        if (!TestUtils.checkLocalRepoArticleLinkFoundOnModule(GithubRepositories.getRepositories(), linksToTheGithubModule, articleRelativeUrl)) {
             recordMetrics(1, TestMetricTypes.FAILED);
             recordFailure(GlobalConstants.givenArticlesWithALinkToTheGitHubModule_whenTheArticleLoads_thenTheGitHubModuleLinksBackToTheArticle);
             badURLs.put(GlobalConstants.givenArticlesWithALinkToTheGitHubModule_whenTheArticleLoads_thenTheGitHubModuleLinksBackToTheArticle, page.getUrlWithNewLineFeed());
         } else if (!shouldSkipUrl(page, GlobalConstants.givenArticlesWithALinkToTheGitHubModule_whenTheArticleLoads_thenTheArticleTitleAndGitHubLinkMatch)
-            && !TestUtils.checkLocalRepoArticleLinkAndTitleMatches(GlobalConstants.tutorialsRepos, linksToTheGithubModule, articleHeading)) {
+            && !TestUtils.checkLocalRepoArticleLinkAndTitleMatches(GithubRepositories.getRepositories(), linksToTheGithubModule, articleHeading)) {
             recordMetrics(1, TestMetricTypes.FAILED);
             recordFailure(GlobalConstants.givenArticlesWithALinkToTheGitHubModule_whenTheArticleLoads_thenTheArticleTitleAndGitHubLinkMatch);
             badURLs.put(GlobalConstants.givenArticlesWithALinkToTheGitHubModule_whenTheArticleLoads_thenTheArticleTitleAndGitHubLinkMatch, page.getUrlWithNewLineFeed());
@@ -528,7 +529,7 @@ public class AllUrlsUITest extends AllUrlsUIBaseTest {
                 givenAllArticles_whenAnArticleLoads_thenItHasSingleShortcodeAtTheEnd(page);
                 givenAllArticles_whenAnalyzingCodeBlocks_thenCodeBlocksAreRenderedProperly(page);
                 givenAllArticles_whenAnalyzingImages_thenImagesDoNotHaveEmptyAltAttribute(page);
-                givenAllArticles_whenAnalyzingExcerpt_thenItShouldNotBeEmptyAndShouldMatchDescription(page);                
+                givenAllArticles_whenAnalyzingExcerpt_thenItShouldNotBeEmptyAndShouldMatchDescription(page);
             }
         } catch (Exception e) {
             logger.error("Error occurred while processing: {}, error message: {}",

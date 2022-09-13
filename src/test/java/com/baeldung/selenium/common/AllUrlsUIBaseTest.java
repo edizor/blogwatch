@@ -19,6 +19,7 @@ import org.junit.jupiter.api.extension.support.TypeBasedParameterResolver;
 import org.springframework.beans.factory.annotation.Value;
 
 import com.baeldung.common.AllUrlsConcurrentExtension;
+import com.baeldung.common.GithubRepositories;
 import com.baeldung.common.GlobalConstants;
 import com.baeldung.common.UrlIterator;
 import com.baeldung.common.Utils;
@@ -105,7 +106,7 @@ public class AllUrlsUIBaseTest extends ConcurrentBaseUISeleniumTest {
             return;
         }
         logger.info("Loading Github repositories into local");
-        for (GitHubRepoVO gitHubRepo : GlobalConstants.tutorialsRepos) {
+        for (GitHubRepoVO gitHubRepo : GithubRepositories.getRepositories()) {
             try {
                Utils.fetchGitRepo(redownloadRepo, Paths.get(gitHubRepo.repoLocalPath()), gitHubRepo.repoUrl());
             } catch (Exception e) {
