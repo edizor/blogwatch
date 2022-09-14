@@ -63,14 +63,22 @@ public class TutorialsTest extends BaseTest {
         markBuiltModules(modules, integrationProfiles, false);
 
         List<MavenProjectVO> modulesMissingInDefault = modules.values().stream()
-                .filter(module -> !module.isBuildInDefaultProfile()
-                        && !testExceptions.contains(removeRepoLocalPath(tutorialsRepo, module.getPomFileLocation())))
+                .filter(module -> {
+                    final String modulePath = removeRepoLocalPath(tutorialsRepo, module.getPomFileLocation());
+                    return !module.isBuildInDefaultProfile()
+                        // we also check with a leading slash
+                        && !(testExceptions.contains(modulePath) || testExceptions.contains(modulePath + "/"));
+                })
                 .sorted(Comparator.comparing(MavenProjectVO::getPomFileLocation))
                 .collect(Collectors.toList());
 
         List<MavenProjectVO> modulesMissingInIntegraiton = modules.values().stream()
-                .filter(module -> !module.isBuildInIntegrationProfile()
-                        && !testExceptions.contains(removeRepoLocalPath(tutorialsRepo, module.getPomFileLocation())))
+                .filter(module -> {
+                    final String modulePath = removeRepoLocalPath(tutorialsRepo, module.getPomFileLocation());
+                    return !module.isBuildInIntegrationProfile()
+                        // we also check with a leading slash
+                        && !(testExceptions.contains(modulePath) || testExceptions.contains(modulePath + "/"));
+                })
                 .sorted(Comparator.comparing(MavenProjectVO::getPomFileLocation))
                 .collect(Collectors.toList());
 
