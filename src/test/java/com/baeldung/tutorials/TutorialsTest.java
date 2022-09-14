@@ -65,9 +65,7 @@ public class TutorialsTest extends BaseTest {
         List<MavenProjectVO> modulesMissingInDefault = modules.values().stream()
                 .filter(module -> {
                     final String modulePath = removeRepoLocalPath(tutorialsRepo, module.getPomFileLocation());
-                    return !module.isBuildInDefaultProfile()
-                        // we also check with a leading slash
-                        && !(testExceptions.contains(modulePath) || testExceptions.contains(modulePath + "/"));
+                    return !module.isBuildInDefaultProfile() && !(hasException(testExceptions, modulePath));
                 })
                 .sorted(Comparator.comparing(MavenProjectVO::getPomFileLocation))
                 .collect(Collectors.toList());
@@ -75,9 +73,7 @@ public class TutorialsTest extends BaseTest {
         List<MavenProjectVO> modulesMissingInIntegraiton = modules.values().stream()
                 .filter(module -> {
                     final String modulePath = removeRepoLocalPath(tutorialsRepo, module.getPomFileLocation());
-                    return !module.isBuildInIntegrationProfile()
-                        // we also check with a leading slash
-                        && !(testExceptions.contains(modulePath) || testExceptions.contains(modulePath + "/"));
+                    return !module.isBuildInIntegrationProfile() && !(hasException(testExceptions, modulePath));
                 })
                 .sorted(Comparator.comparing(MavenProjectVO::getPomFileLocation))
                 .collect(Collectors.toList());
@@ -101,6 +97,11 @@ public class TutorialsTest extends BaseTest {
             testExceptions = new ArrayList<>();
         }
         return testExceptions;
+    }
+
+    private boolean hasException(List<String> exceptionList, String path) {
+        // we also check with a leading slash
+        return exceptionList.contains(path) || exceptionList.contains(path + "/");
     }
 
     private void markBuiltModules(Map<String, MavenProjectVO> allModules, HashMap<String, List<String>> modulesForProfiles, boolean defaultProfiles) {
