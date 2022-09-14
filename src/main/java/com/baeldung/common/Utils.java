@@ -80,6 +80,7 @@ import com.github.javaparser.JavaParser;
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategies;
@@ -446,14 +447,20 @@ public class Utils {
             compilationUnit.getResult()
                 .ifPresent(result -> result.findAll(ClassOrInterfaceDeclaration.class)
                     .forEach(c -> {
-                        addNewJavaConstructToTheList(GlobalConstants.CONSTRUCT_TYPE_CLASS_OR_INTERFACE, null, c.getNameAsString(), javaConstructs);
+                        // find out if the code sample is marked with @Generated
+                        final Optional<AnnotationExpr> hasGeneratedAnnotation = c.getAnnotations()
+                            .stream()
+                            .filter(annotationExpr -> annotationExpr.getNameAsString()
+                                .equalsIgnoreCase("Generated"))
+                            .findAny();
+                        addNewJavaConstructToTheList(GlobalConstants.CONSTRUCT_TYPE_CLASS_OR_INTERFACE, null, c.getNameAsString(), hasGeneratedAnnotation.isPresent(), javaConstructs);
                         c.getMethods()
-                            .forEach(m -> addNewJavaConstructToTheList(GlobalConstants.CONSTRUCT_TYPE_METHOD, c.getNameAsString(), m.getNameAsString(), javaConstructs));
+                            .forEach(m -> addNewJavaConstructToTheList(GlobalConstants.CONSTRUCT_TYPE_METHOD, c.getNameAsString(), m.getNameAsString(), false, javaConstructs));
                     }));
         }
     }
 
-    private static void addNewJavaConstructToTheList(String constructType, String constructParentTypeName, String constructName, List<JavaConstruct> javaConstructs) {
+    private static void addNewJavaConstructToTheList(String constructType, String constructParentTypeName, String constructName, boolean hasGeneratedAnnotation, List<JavaConstruct> javaConstructs) {
         for (JavaConstruct javaConstruct : javaConstructs) {
             if (constructType.equals(javaConstruct.getConstructType()) && constructName.equals(javaConstruct.getConstructName())) {
                 if (null == constructParentTypeName && null == javaConstruct.getConstructParentTypeName()) {
@@ -465,7 +472,7 @@ public class Utils {
                 return;
             }
         }
-        javaConstructs.add(new JavaConstruct(constructType, constructParentTypeName, constructName));
+        javaConstructs.add(new JavaConstruct(constructType, constructParentTypeName, constructName, hasGeneratedAnnotation));
     }
 
     private static void getJavaConstructsFromJavaCodeWrappingIntoDummyClass(String code, List<JavaConstruct> javaConstructs) {
@@ -480,9 +487,9 @@ public class Utils {
             compilationUnit.getResult()
                 .ifPresent(result -> result.findAll(ClassOrInterfaceDeclaration.class)
                     .forEach(c -> {
-                        addNewJavaConstructToTheList(GlobalConstants.CONSTRUCT_TYPE_CLASS_OR_INTERFACE, null, c.getNameAsString(), javaConstructs);
+                        addNewJavaConstructToTheList(GlobalConstants.CONSTRUCT_TYPE_CLASS_OR_INTERFACE, null, c.getNameAsString(), false, javaConstructs);
                         c.getMethods()
-                            .forEach(m -> addNewJavaConstructToTheList(GlobalConstants.CONSTRUCT_TYPE_METHOD, c.getNameAsString(), m.getNameAsString(), javaConstructs));
+                            .forEach(m -> addNewJavaConstructToTheList(GlobalConstants.CONSTRUCT_TYPE_METHOD, c.getNameAsString(), m.getNameAsString(), false, javaConstructs));
                     }));
         }
     }
@@ -519,11 +526,9 @@ public class Utils {
     }
 
     public static void filterAndCollectJavaConstructsNotFoundOnGitHub(List<JavaConstruct> javaConstructsOnPost, List<JavaConstruct> javaConstructsOnGitHub, Multimap<String, JavaConstruct> results, String url) {
-        javaConstructsOnPost.forEach(javaConstructOnPage -> {
-            if (javaConstructsOnGitHub.stream().filter(javaConstructOnGitHub -> javaConstructOnPage.equalsTo(javaConstructOnGitHub)).count() > 0) {
-                javaConstructOnPage.setFoundOnGitHub(true);
-            }
-        });
+        javaConstructsOnPost.forEach(javaConstructOnPage ->
+            javaConstructOnPage.setFoundOnGitHub(javaConstructsOnGitHub.stream().anyMatch(javaConstructOnPage::equalsTo))
+        );
 
         // @formatter:off
         javaConstructsOnPost.stream().filter(javaConstructOnPage -> !javaConstructOnPage.isFoundOnGitHub() && !javaConstructOnPage.getConstructName().equals(GlobalConstants.CONSTRUCT_DUMMY_CLASS_NAME))
@@ -532,7 +537,6 @@ public class Utils {
         if (!results.containsKey(url)) {
             results.put(url, null);
         }
-
     }
 
     public static String getErrorMessageForJavaConstructsTest(Multimap<String, JavaConstruct> results, String baseUrl) {

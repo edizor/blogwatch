@@ -3,26 +3,17 @@ package com.baeldung.common.vo;
 import com.baeldung.common.GlobalConstants;
 
 public class JavaConstruct {
-    private String constructType;
-    private String constructParentTypeName; // if constructType is Method, constructParentTypeName will contain the Java Class Type
-    private String constructName;
+    private final String constructType;
+    private final String constructParentTypeName; // if constructType is Method, constructParentTypeName will contain the Java Class Type
+    private final String constructName;
+    private final boolean hasGeneratedAnnotation;
     private boolean foundOnGitHub;
 
-    public JavaConstruct() {
-    }
-
-    public JavaConstruct(String constructType, String constructParentTypeName, String constructName, boolean foundOnGitHub) {
+    public JavaConstruct(String constructType, String constructParentTypeName, String constructName, boolean hasGeneratedAnnotation) {
         this.constructType = constructType;
         this.constructParentTypeName = constructParentTypeName;
         this.constructName = constructName;
-        this.foundOnGitHub = foundOnGitHub;
-    }
-
-    public JavaConstruct(String constructType, String constructParentTypeName, String constructName) {
-        super();
-        this.constructType = constructType;
-        this.constructParentTypeName = constructParentTypeName;
-        this.constructName = constructName;
+        this.hasGeneratedAnnotation = hasGeneratedAnnotation;
         this.foundOnGitHub = false;
     }
 
@@ -61,16 +52,8 @@ public class JavaConstruct {
         return constructType;
     }
 
-    public void setConstructType(String constructType) {
-        this.constructType = constructType;
-    }
-
     public String getConstructName() {
         return constructName;
-    }
-
-    public void setConstructName(String constructName) {
-        this.constructName = constructName;
     }
 
     public boolean isFoundOnGitHub() {
@@ -85,8 +68,7 @@ public class JavaConstruct {
         return constructParentTypeName;
     }
 
-    public void setConstructParentTypeName(String constructParentTypeName) {
-        this.constructParentTypeName = constructParentTypeName;
+    public boolean hasGeneratedAnnotation() {
+        return hasGeneratedAnnotation;
     }
-
 }
