@@ -83,7 +83,7 @@ public class JavaConstructsTest extends BaseJsoupTest {
                 }
                 postUrlsToGithubModuleLocalPaths.put(postUrl, modulePath);
             }
-            
+
         }
         logger.info("Finished - creating Map for Posts to Github Modules");
 
@@ -111,7 +111,10 @@ public class JavaConstructsTest extends BaseJsoupTest {
                 // get HTML of the post
                 Document jSoupDocument = Utils.getJSoupDocument(postUrl);
                 // get Java constructs from a post
-                List<JavaConstruct> javaConstructsOnPost = Utils.getJavaConstructsFromPreTagsInTheJSoupDocument(jSoupDocument);
+                final List<JavaConstruct> javaConstructsOnPost = Utils.getJavaConstructsFromPreTagsInTheJSoupDocument(jSoupDocument)
+                    .stream()
+                    .filter(javaConstruct -> !javaConstruct.hasGeneratedAnnotation()) // filter out @Generated classes
+                    .toList();
                 // collect Java constructs from the modules of post
                 final List<JavaConstruct> javaConstructsOnModules = modules.stream()
                     .flatMap(path -> moduleToJavaConstructs.get(path)
