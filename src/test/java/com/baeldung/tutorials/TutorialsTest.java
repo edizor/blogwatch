@@ -63,14 +63,18 @@ public class TutorialsTest extends BaseTest {
         markBuiltModules(modules, integrationProfiles, false);
 
         List<MavenProjectVO> modulesMissingInDefault = modules.values().stream()
-                .filter(module -> !module.isBuildInDefaultProfile()
-                        && !testExceptions.contains(removeRepoLocalPath(tutorialsRepo, module.getPomFileLocation())))
+                .filter(module -> {
+                    final String modulePath = removeRepoLocalPath(tutorialsRepo, module.getPomFileLocation());
+                    return !module.isBuildInDefaultProfile() && !(hasException(testExceptions, modulePath));
+                })
                 .sorted(Comparator.comparing(MavenProjectVO::getPomFileLocation))
                 .collect(Collectors.toList());
 
         List<MavenProjectVO> modulesMissingInIntegraiton = modules.values().stream()
-                .filter(module -> !module.isBuildInIntegrationProfile()
-                        && !testExceptions.contains(removeRepoLocalPath(tutorialsRepo, module.getPomFileLocation())))
+                .filter(module -> {
+                    final String modulePath = removeRepoLocalPath(tutorialsRepo, module.getPomFileLocation());
+                    return !module.isBuildInIntegrationProfile() && !(hasException(testExceptions, modulePath));
+                })
                 .sorted(Comparator.comparing(MavenProjectVO::getPomFileLocation))
                 .collect(Collectors.toList());
 
@@ -93,6 +97,11 @@ public class TutorialsTest extends BaseTest {
             testExceptions = new ArrayList<>();
         }
         return testExceptions;
+    }
+
+    private boolean hasException(List<String> exceptionList, String path) {
+        // we also check with a leading slash
+        return exceptionList.contains(path) || exceptionList.contains(path + "/");
     }
 
     private void markBuiltModules(Map<String, MavenProjectVO> allModules, HashMap<String, List<String>> modulesForProfiles, boolean defaultProfiles) {
