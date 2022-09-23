@@ -174,5 +174,8 @@ givenAllArticles_whenAnalyzingExcerpt_thenItShouldNotBeEmptyAndShouldMatchDescri
 
 givenAllArticlesAndPages_whenAPageLoads_thenItDoesNotContainNoindexTag:
  - /thank-you
-
-
+ - /thank-you-jw
+ - /thanks-course-call
+ - /best-of
+ - /guides
+ - /blogs-i-read
